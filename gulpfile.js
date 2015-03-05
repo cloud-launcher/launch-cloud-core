@@ -1,32 +1,35 @@
-const gulp = require('gulp'),
-      plugins = require('gulp-load-plugins')({rename: {'gulp-util': 'gutil', 'gulp-cached': 'cache', 'gulp-6to5': 'to5'}});
+const gulp = require('gulp');
 
 const {
   sequence,
   gutil,
-  cache,
+  cached,
   print,
-  watch,
   sourcemaps,
-  to5,
   traceur,
   concat,
   jshint,
   clean,
-  pipe
-} = plugins;
+  pipe,
+  tasks
+} = require('gulp-load-plugins')({
+  rename: {
+    'gulp-util': 'gutil'
+  }
+});
+
+tasks(gulp, require);
 
 gulp.task('default', ['build']);
 
-gulp.task('build', sequence('clean', 'transpile'));
+gulp.task('build', sequence('clean', 'runtime', 'copyProfiles'));
 
 gulp.task('dev', () => gulp.watch(paths.scripts, ['runtime']));
 
-console.log(traceur.RUNTIME_PATH);
 gulp.task('transpile', //['jshint'],
   () => pipe([
     gulp.src(paths.scripts)
-    ,cache('transpile')
+    ,cached('transpile')
     ,print()
     ,sourcemaps.init()
     // ,to5()
@@ -35,6 +38,12 @@ gulp.task('transpile', //['jshint'],
     ,gulp.dest(paths.dist)
   ])
   .on('error', function(e) { console.log(e); }));
+
+gulp.task('copyProfiles',
+  () => pipe([
+    gulp.src(['src/providers/**/profile.json'])
+    ,gulp.dest('.dist/providers')
+  ]));
 
 gulp.task('runtime', ['transpile'],
   () => pipe([
@@ -48,7 +57,7 @@ gulp.task('runtime', ['transpile'],
 gulp.task('jshint',
   () => pipe([
     gulp.src(paths.scripts)
-    ,cache('jshint')
+    ,cached('jshint')
     ,print()
     ,jshint()
     ,jshint.reporter('jshint-stylish')
@@ -63,5 +72,5 @@ gulp.task('clean',
 
 const paths = {
   scripts: ['src/**/*.js'],
-  dist: 'dist'
+  dist: '.dist'
 };

@@ -57,7 +57,9 @@ module.exports = (out) => {
           if (!provider) throw new Error(['No provider with name', providerName].join(' '));
 
           _.each(locations, location => {
-            if (!_.contains(provider.$locations, location)) throw new Error(['Provider', providerName, 'has no location', location].join(' '));
+            if (provider.profile.locations[location]) {
+              throw new Error(['Provider', providerName, 'has no location', location].join(' '));
+            }
           });
         });
       }

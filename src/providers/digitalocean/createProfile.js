@@ -53,10 +53,10 @@ module.exports = (DOWrapper, DOToken) => {
   }
 
   function makeProfile(values) {
-    const [sizes, regions] = values;
+    const [sizes, locations] = values;
     return {
       sizes,
-      regions
+      locations
     };
   }
 };

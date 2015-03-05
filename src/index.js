@@ -132,7 +132,9 @@ function validateCloud(cloudDescription) {
         if (!provider) reject(new Error(['No provider with name', providerName].join(' ')));
 
         _.each(locations, location => {
-          if (!_.contains(provider.$locations, location)) reject(new Error(['Provider', providerName, 'has no location', location].join(' ')));
+          if (provider.profile.locations[location] === undefined) {
+            reject(new Error(['Provider', providerName, 'has no location', location].join(' ')));
+          }
         });
       });
 

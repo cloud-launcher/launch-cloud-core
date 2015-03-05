@@ -1,10 +1,7 @@
-var DOWrapper = require('do-wrapper');
-
-
 module.exports = digitalocean;
 
 
-function digitalocean(config) {
+function digitalocean(DOWrapper, config) {
   return {
     name: 'digitalocean',
     target: 'coreos',
@@ -38,5 +35,6 @@ function digitalocean(config) {
 }
 
 digitalocean.$name = 'digitalocean';
-digitalocean.$target = 'coreos';
-digitalocean.$locations = ['sfo1', 'nyc2', 'ams2', 'sgp1', 'lon1', 'nyc3', 'ams3']; // Should we pull these from relevant API?
+digitalocean.$targets = ['coreos'];
+digitalocean.$profile = require('./profile.json');
+// digitalocean.$locations = ['sfo1', 'nyc2', 'ams2', 'sgp1', 'lon1', 'nyc3', 'ams3']; // Should we pull these from relevant API?
