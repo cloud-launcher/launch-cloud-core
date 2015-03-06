@@ -3,8 +3,6 @@ module.exports = digitalocean;
 
 function digitalocean(DOWrapper, config) {
   return {
-    name: 'digitalocean',
-    target: 'coreos',
     createMachine,
     destroyMachine
   };
@@ -36,5 +34,3 @@ function digitalocean(DOWrapper, config) {
 
 digitalocean.$name = 'digitalocean';
 digitalocean.$targets = ['coreos'];
-digitalocean.$profile = require('./profile.json');
-// digitalocean.$locations = ['sfo1', 'nyc2', 'ams2', 'sgp1', 'lon1', 'nyc3', 'ams3']; // Should we pull these from relevant API?

@@ -3,12 +3,13 @@
   "version": "0.0.1",
   "description": "launches clouds",
   "repository": "https://github.com/cloud-launcher/lauch-cloud-core",
-  "main": "/.dist/index.js",
+  "main": ".dist/index.js",
   "author": "Blake La Pierre",
   "license": "MIT",
   "dependencies": {
     "do-wrapper": "^0.1.1",
     "generator-trees": "^0.0.20",
+    "launch-cloud-providers": "0.0.3",
     "promise-callback": "^1.0.1"
   },
   "devDependencies": {
