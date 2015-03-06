@@ -24,9 +24,4 @@ module.exports = (providerApis, providerConfigs) => {
     };
     return providers;
   }, {});
-
-  // return {
-  //   dummy,
-  //   digitalocean: digitalocean(providerApis.digitalocean, providerConfigs.digitalocean)
-  // };
 };
