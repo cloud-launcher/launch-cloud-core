@@ -22,7 +22,8 @@ module.exports = (providerApis, providerConfigs) => {
       targets: $targets,
       credentialSchema: $credentialSchema,
       credentials: {},
-      api: provider(providerApis[$name], providerConfigs[$name])
+      api: provider(providerApis[$name], providerConfigs[$name]),
+      $rawAPI: providerApis[$name]
     };
     return providers;
   }, {});
