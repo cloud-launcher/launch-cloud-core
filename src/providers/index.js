@@ -14,12 +14,14 @@ module.exports = (providerApis, providerConfigs) => {
     microsoft,
     rackspace
   ].reduce((providers, provider) => {
-    const {$name, $targets} = provider;
+    const {$name, $targets, $credentialSchema} = provider;
     providerConfigs[$name] = providerConfigs[$name] || {};
     providers[$name] = {
       name: $name,
       profile: profiles[$name],
       targets: $targets,
+      credentialSchema: $credentialSchema,
+      credentials: {},
       api: provider(providerApis[$name], providerConfigs[$name])
     };
     return providers;

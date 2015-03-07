@@ -41,3 +41,13 @@ function google(api, config) {
 
 google.$name = 'google';
 google.$targets = ['coreos'];
+google.$credentialSchema = {
+  project: {
+    type: 'string',
+    header: 'Project Name (must already exist)'
+  },
+  account: {
+    type: 'string',
+    header: 'Account'
+  }
+};

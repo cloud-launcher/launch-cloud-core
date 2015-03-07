@@ -34,3 +34,9 @@ function digitalocean(DOWrapper, config) {
 
 digitalocean.$name = 'digitalocean';
 digitalocean.$targets = ['coreos'];
+digitalocean.$credentialSchema = {
+  token: {
+    type: 'string',
+    header: 'Access Token'
+  }
+};
