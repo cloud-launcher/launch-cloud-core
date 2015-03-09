@@ -1,3 +1,4 @@
-module.exports = (cloud, providers) => {
-  console.log('we launchin');
-};
+import cloud from '../cloud';
+
+module.exports =
+  (cloudDescription, providers, log) => cloud(cloudDescription, providers, log).launch();

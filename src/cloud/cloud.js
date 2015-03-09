@@ -1,11 +1,121 @@
 var generators = require('generator-trees').g;
 
-module.exports = config => {
-
+module.exports = (cloud, providers, log) => {
   return {launch};
 
   function launch() {
-    return generatePlan(config).then(executePlan);
+    log('Launching Cloud');
+
+    return validateCloud(cloud, providers, log)
+            .then(generatePlan)
+            .then(executePlan);
+  }
+
+  function validateCloud(cloud, providers, log) {
+    log('Validating Cloud Description', cloudDescription);
+
+    const {
+      domain,
+      root,
+      authorizations,
+      locations,
+      configuration,
+      roles,
+      containers
+    } = cloudDescription;
+
+    return validateDomain(cloudDescription)
+            .then(validateRoot)
+            .then(validateAuthorizations)
+            .then(validateLocations)
+            .then(validateContainers)
+            .then(validateRoles)
+            .then(validateConfiguration)
+            .then(() => { return cloudDescription; });
+
+    function validateDomain() {
+      log('Validating Domain');
+
+      return new Promise((resolve, reject) => {
+        resolve();
+      });
+    }
+
+    function validateRoot() {
+      log('Validating Root');
+
+      return new Promise((resolve, reject) => {
+        resolve();
+      });
+    }
+
+    function validateAuthorizations() {
+      log('Validating Authorizations');
+
+      return new Promise((resolve, reject) => {
+        resolve();
+      });
+    }
+
+    function validateLocations() {
+      log('Validating Locations');
+
+      return new Promise((resolve, reject) => {
+        _.each(locations, (locations, providerName) => {
+          const provider = providers[providerName];
+
+          if (!provider) reject(new Error(['No provider with name', providerName].join(' ')));
+
+          _.each(locations, location => {
+            if (!_.contains(provider.$locations, location)) reject(new Error(['Provider', providerName, 'has no location', location].join(' ')));
+          });
+        });
+
+        resolve();
+      });
+    }
+
+    function validateContainers() {
+      log('Validating Containers');
+
+      return Promise
+                .all(_.map(containers, (containerDescription, name) => {
+                  const [namespace, image] = containerDescription.container.split('/'),
+                        [repository, tag] = image.split(':');
+
+                  return checkDockerRegistry(namespace, repository, tag);
+                }));
+
+      function checkDockerRegistry(namespace, repository, tag) {
+        tag = tag || 'latest';
+        const url = `https://registry.hub.docker.com/v1/repositories/${namespace}/${repository}/tags/${tag}`;
+        // log(`Looking for container ${namespace}/${repository}:${tag} at ${url}`);
+        return new Promise((resolve, reject) => {
+          request(url, (error, response, body) => {
+            if (error) reject(new Error(['Error checking Docker registry', error].join(' ')));
+            else {
+              if (response.statusCode === 200) {
+                log(`Found ${namespace}/${repository}:${tag}`);
+                resolve();
+              }
+              else reject(new Error(`Did not find ${namespace}/${repository}:${tag} on Docker registry!`));
+            }
+          });
+        });
+      }
+    }
+
+    function validateRoles() {
+      return new Promise((resolve, reject) => {
+        resolve();
+      });
+    }
+
+    function validateConfiguration() {
+      return new Promise((resolve, reject) => {
+        resolve();
+      });
+    }
   }
 
   function machineGenerator() {
@@ -14,13 +124,14 @@ module.exports = config => {
   }
 
   function generatePlan(config) {
-    console.log('generatePlan', config);
+    log('Generating Launch Plan', config);
 
     return new Promise((resolve, reject) => {
-      console.log('resolving generatePlan', config);
+      log('resolving generatePlan', config);
+
       resolve({plan: 'a plan'});
 
-      // console.log('rejecting generatePlan', config);
+      // log('rejecting generatePlan', config);
       // reject({error: 'rejected'});
 
       //var manifest = createManifest(config);
@@ -49,7 +160,8 @@ module.exports = config => {
   }
 
   function executePlan(plan) {
-    console.log('executePlan', plan);
+    log('Executing Launch Plan', plan);
+
     return new Promise((resolve, reject) => {
       launchClusters(plan).then(resolve, reject);
     });
