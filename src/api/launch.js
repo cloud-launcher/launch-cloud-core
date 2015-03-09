@@ -1,4 +1,5 @@
-import cloud from '../cloud';
+import cloud from '../cloud/cloud';
 
 module.exports =
-  (cloudDescription, providers, log) => cloud(cloudDescription, providers, log).launch();
+  (cloudDescription, providers, log, request, dockerHubApiRoot) =>
+  cloud(cloudDescription, providers, log, request, dockerHubApiRoot).launch();

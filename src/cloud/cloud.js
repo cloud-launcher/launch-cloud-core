@@ -1,6 +1,10 @@
+import _ from 'lodash';
+
 var generators = require('generator-trees').g;
 
-module.exports = (cloud, providers, log) => {
+const dockerHubApiRoot = 'https://registry.hub.docker.com';
+
+module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   return {launch};
 
   function launch() {
@@ -12,7 +16,7 @@ module.exports = (cloud, providers, log) => {
   }
 
   function validateCloud(cloud, providers, log) {
-    log('Validating Cloud Description', cloudDescription);
+    log('Validating Cloud Description', cloud);
 
     const {
       domain,
@@ -22,16 +26,16 @@ module.exports = (cloud, providers, log) => {
       configuration,
       roles,
       containers
-    } = cloudDescription;
+    } = cloud;
 
-    return validateDomain(cloudDescription)
+    return validateDomain(cloud)
             .then(validateRoot)
             .then(validateAuthorizations)
             .then(validateLocations)
             .then(validateContainers)
             .then(validateRoles)
             .then(validateConfiguration)
-            .then(() => { return cloudDescription; });
+            .then(() => { return cloud; });
 
     function validateDomain() {
       log('Validating Domain');
@@ -64,10 +68,12 @@ module.exports = (cloud, providers, log) => {
         _.each(locations, (locations, providerName) => {
           const provider = providers[providerName];
 
+          log(provider);
+
           if (!provider) reject(new Error(['No provider with name', providerName].join(' ')));
 
           _.each(locations, location => {
-            if (!_.contains(provider.$locations, location)) reject(new Error(['Provider', providerName, 'has no location', location].join(' ')));
+            if (!provider.profile.locations[location]) reject(new Error(['Provider', providerName, 'has no location', location].join(' ')));
           });
         });
 
@@ -80,15 +86,15 @@ module.exports = (cloud, providers, log) => {
 
       return Promise
                 .all(_.map(containers, (containerDescription, name) => {
-                  const [namespace, image] = containerDescription.container.split('/'),
-                        [repository, tag] = image.split(':');
+                  const [namespace, image] = (containerDescription.container || name).split('/'),
+                        [repository, tag] = (image || namespace).split(':');
 
                   return checkDockerRegistry(namespace, repository, tag);
                 }));
 
       function checkDockerRegistry(namespace, repository, tag) {
         tag = tag || 'latest';
-        const url = `https://registry.hub.docker.com/v1/repositories/${namespace}/${repository}/tags/${tag}`;
+        const url = `${dockerHubApiRoot}/v1/repositories/${namespace}/${repository}/tags/${tag}`;
         // log(`Looking for container ${namespace}/${repository}:${tag} at ${url}`);
         return new Promise((resolve, reject) => {
           request(url, (error, response, body) => {
