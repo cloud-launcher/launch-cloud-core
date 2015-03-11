@@ -1,3 +1,6 @@
+import expand from './expand';
+import validate from './validate';
+
 import _ from 'lodash';
 
 var generators = require('generator-trees').g;
@@ -10,130 +13,17 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   function launch() {
     log('Launching Cloud');
 
-    return validateCloud(cloud, providers, log)
+    return expand(cloud)
+            .then(cloud => validate(cloud, providers, log, request, dockerHubApiRoot))
             .then(generatePlan)
             .then(executePlan);
   }
 
-  function validateCloud(cloud, providers, log) {
-    log('Validating Cloud Description', cloud);
-
-    const {
-      domain,
-      root,
-      authorizations,
-      locations,
-      configuration,
-      roles,
-      containers
-    } = cloud;
-
-    return validateDomain(cloud)
-            .then(validateRoot)
-            .then(validateAuthorizations)
-            .then(validateLocations)
-            .then(validateContainers)
-            .then(validateRoles)
-            .then(validateConfiguration)
-            .then(() => { return cloud; });
-
-    function validateDomain() {
-      log('Validating Domain');
-
-      return new Promise((resolve, reject) => {
-        resolve();
-      });
-    }
-
-    function validateRoot() {
-      log('Validating Root');
-
-      return new Promise((resolve, reject) => {
-        resolve();
-      });
-    }
-
-    function validateAuthorizations() {
-      log('Validating Authorizations');
-
-      return new Promise((resolve, reject) => {
-        resolve();
-      });
-    }
-
-    function validateLocations() {
-      log('Validating Locations');
-
-      return new Promise((resolve, reject) => {
-        _.each(locations, (locations, providerName) => {
-          const provider = providers[providerName];
-
-          log(provider);
-
-          if (!provider) reject(new Error(['No provider with name', providerName].join(' ')));
-
-          _.each(locations, location => {
-            if (!provider.profile.locations[location]) reject(new Error(['Provider', providerName, 'has no location', location].join(' ')));
-          });
-        });
-
-        resolve();
-      });
-    }
-
-    function validateContainers() {
-      log('Validating Containers');
-
-      return Promise
-                .all(_.map(containers, (containerDescription, name) => {
-                  const [namespace, image] = (containerDescription.container || name).split('/'),
-                        [repository, tag] = (image || namespace).split(':');
-
-                  return checkDockerRegistry(namespace, repository, tag);
-                }));
-
-      function checkDockerRegistry(namespace, repository, tag) {
-        tag = tag || 'latest';
-        const url = `${dockerHubApiRoot}/v1/repositories/${namespace}/${repository}/tags/${tag}`;
-        // log(`Looking for container ${namespace}/${repository}:${tag} at ${url}`);
-        return new Promise((resolve, reject) => {
-          request(url, (error, response, body) => {
-            if (error) reject(new Error(['Error checking Docker registry', error].join(' ')));
-            else {
-              if (response.statusCode === 200) {
-                log(`Found ${namespace}/${repository}:${tag}`);
-                resolve();
-              }
-              else reject(new Error(`Did not find ${namespace}/${repository}:${tag} on Docker registry!`));
-            }
-          });
-        });
-      }
-    }
-
-    function validateRoles() {
-      return new Promise((resolve, reject) => {
-        resolve();
-      });
-    }
-
-    function validateConfiguration() {
-      return new Promise((resolve, reject) => {
-        resolve();
-      });
-    }
-  }
-
-  function machineGenerator() {
-    // clusterMachineGenerators = _.map();
-    return generators.loopUntilEmpty(clusterMachineGenerators);
-  }
-
   function generatePlan(config) {
-    log('Generating Launch Plan', config);
+    log('Generating Launch Plan');
 
     return new Promise((resolve, reject) => {
-      log('resolving generatePlan', config);
+      log('resolving generatePlan');
 
       resolve({plan: 'a plan'});
 
@@ -166,7 +56,7 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   }
 
   function executePlan(plan) {
-    log('Executing Launch Plan', plan);
+    log('Executing Launch Plan');
 
     return new Promise((resolve, reject) => {
       launchClusters(plan).then(resolve, reject);
@@ -187,6 +77,11 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
 
   function launchMachine(api) {
 
+  }
+
+  function machineGenerator() {
+    // clusterMachineGenerators = _.map();
+    return generators.loopUntilEmpty(clusterMachineGenerators);
   }
 };
 
