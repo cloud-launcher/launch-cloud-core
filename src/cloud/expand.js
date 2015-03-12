@@ -29,10 +29,13 @@ module.exports = cloud => new Promise((resolve, reject) => {
   function inject$all(roles) {
     const {$all} = roles;
 
+    // Yeah, yeah, it's slow...
     if ($all && $all.length > 0) {
       _.each(roles, (role, roleName) => {
         if (roleName !== '$all') {
-          role.splice(0, 0, ...$all);
+          _.each($all, $allRole => {
+            if (!_.contains(role, $allRole)) role.unshift($allRole);
+          });
         }
       });
     }

@@ -17,6 +17,7 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
           .then(validateRoot)
           .then(validateAuthorizations)
           .then(validateLocations)
+          .then(validateProviderCredentials)
           .then(validateContainers)
           .then(validateRoles)
           .then(validateConfiguration)
@@ -56,6 +57,7 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
     return new Promise((resolve, reject) => {
       log('Validating Locations');
 
+      let providerCount = 0;
       const locationCount = _.reduce(locations, (count, locations, providerName) => {
         const provider = providers[providerName];
 
@@ -71,6 +73,8 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
           }
         });
 
+        if (locations.length) providerCount++;
+
         return count + locations.length;
       }, 0);
 
@@ -79,9 +83,45 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
         return;
       }
 
-      log(`Will launch in ${locationCount} locations!`);
+      log(`Will Launch on ${providerCount} Provider${providerCount > 1 ? 's' : ''} in ${locationCount} Location${locationCount > 1 ? 's' : ''}!`);
 
       resolve();
+    });
+  }
+
+  function validateProviderCredentials() {
+    return new Promise((resolve, reject) => {
+      log('Validating Provider Credentials');
+
+      const missing = {};
+
+      _.each(cloud.locations, (locations, providerName) => {
+        if (locations.length > 0) {
+          const missingValues = checkProviderConfiguration(providerName);
+          if (missingValues.length > 0) missing[providerName] = missingValues;
+        }
+      });
+
+      if (_.keys(missing).length > 0) reject({type: 'Credentials', missing});
+      else resolve();
+
+      function checkProviderConfiguration(providerName) {
+        const {credentialSchema, credentials} = providers[providerName],
+              missing = [];
+
+        _.each(credentialSchema, (schema, name) => {
+          const value = credentials[name];
+
+          // Just basic checks for now
+          if (value === undefined ||
+              value === null ||
+              value.length === 0) {
+            missing.push(name);
+          }
+        });
+
+        return missing;
+      }
     });
   }
 
@@ -117,18 +157,20 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
 
       tag = tag || 'latest';
       const url = `${dockerHubApiRoot}/v1/repositories/${qualifiedName}/tags/${tag}`;
-      log(`Looking for container ${qualifiedName}:${tag} at ${url}`);
+      log(`Verifying container ${qualifiedName}:${tag} exists...`);
       return new Promise((resolve, reject) => {
         requests[url] = request(url, (error, response, body) => {
           delete requests[url];
 
-          if (error) reject(new Error(['Error checking Docker registry', error].join(' ')));
+          // if (error) reject(new Error(['Error checking Docker registry', error].join(' ')));
+          if (error) reject({type: 'HubConnection', error: 'Could not connect!'});
           else {
             if (response.statusCode === 200) {
               if (!log(`Found ${qualifiedName}:${tag}`));
               resolve();
             }
-            else reject(new Error(`Did not find ${qualifiedName}:${tag} on Docker registry!`));
+            // else reject(new Error(`Did not find ${qualifiedName}:${tag} on Docker registry!`));
+            else reject({type: 'MissingContainer', container: {qualifiedName, tag}});
           }
         });
       });

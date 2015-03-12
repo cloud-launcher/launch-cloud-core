@@ -54,7 +54,6 @@ gulp.task('transpile', //['jshint'],
   ])
   .on('error', function(e) { console.log(e); }));
 
-
 gulp.task('templates', ['runtime'],
   () => pipe([
     browserify(paths.templates)

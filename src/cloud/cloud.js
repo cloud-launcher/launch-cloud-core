@@ -15,8 +15,6 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   return {launch};
 
   function launch() {
-    log('Launching Cloud');
-
     return expand(cloud)
             .then(cloud => validate(cloud, providers, log, request, dockerHubApiRoot))
             .then(generatePlan)
