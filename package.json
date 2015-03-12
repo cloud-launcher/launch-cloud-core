@@ -13,6 +13,8 @@
     "promise-callback": "^1.0.1"
   },
   "devDependencies": {
+    "brfs": "^1.4.0",
+    "browserify": "^9.0.3",
     "glob": "^4.3.5",
     "gulp": "^3.8.11",
     "gulp-cached": "^1.0.2",
@@ -37,6 +39,7 @@
     "request": "^2.53.0",
     "rjson": "^0.2.4",
     "time-require": "^0.1.2",
-    "uuid": "^2.0.1"
+    "uuid": "^2.0.1",
+    "vinyl-source-stream": "^1.1.0"
   }
 }

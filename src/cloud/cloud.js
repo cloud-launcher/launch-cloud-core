@@ -1,6 +1,8 @@
 import expand from './expand';
 import validate from './validate';
 
+import cloudConfig from '../bootstrapers/cloudConfig';
+
 import _ from 'lodash';
 
 var generators = require('generator-trees').g;
@@ -8,6 +10,8 @@ var generators = require('generator-trees').g;
 const dockerHubApiRoot = 'https://registry.hub.docker.com';
 
 module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
+  console.log(cloudConfig);
+
   return {launch};
 
   function launch() {

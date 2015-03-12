@@ -1,4 +1,6 @@
-const gulp = require('gulp');
+const browserify = require('browserify'),
+      gulp = require('gulp'),
+      source = require('vinyl-source-stream');
 
 const {
   cached,
@@ -24,11 +26,20 @@ if (typeof result === 'string') console.log(result);
 
 gulp.task('default', ['build']);
 
-gulp.task('build', sequence('clean', 'runtime', 'copyProfiles'));
+gulp.task('build', sequence('clean', 'templates', 'copyProfiles'));
 
-gulp.task('dev', ['runtime'], () => gulp.watch(paths.scripts, ['runtime']));
+gulp.task('dev', ['templates', 'copyProfiles'], () => gulp.watch(paths.scripts, ['templates']));
 
 gulp.task('run', () => run(`node ${paths.dist}/index.js`).exec());
+
+gulp.task('runtime', ['transpile'],
+  () => pipe([
+    gulp.src([traceur.RUNTIME_PATH])
+    ,print()
+    ,concat('traceur-runtime.js')
+    ,gulp.dest(paths.dist)
+  ])
+  .on('error', function(e) { console.log(e); }));
 
 gulp.task('transpile', //['jshint'],
   () => pipe([
@@ -43,20 +54,22 @@ gulp.task('transpile', //['jshint'],
   ])
   .on('error', function(e) { console.log(e); }));
 
+
+gulp.task('templates', ['runtime'],
+  () => pipe([
+    browserify(paths.templates)
+      .transform('brfs')
+      .bundle()
+    ,source('templates/index.js')
+    ,print()
+    ,gulp.dest(paths.dist)
+  ]));
+
 gulp.task('copyProfiles',
   () => pipe([
     gulp.src(['src/providers/**/profile.json'])
     ,gulp.dest('.dist/providers')
   ]));
-
-gulp.task('runtime', ['transpile'],
-  () => pipe([
-    gulp.src([traceur.RUNTIME_PATH])
-    ,print()
-    ,concat('traceur-runtime.js')
-    ,gulp.dest(paths.dist)
-  ])
-  .on('error', function(e) { console.log(e); }));
 
 gulp.task('jshint',
   () => pipe([
@@ -76,5 +89,6 @@ gulp.task('clean',
 
 const paths = {
   scripts: ['src/**/*.js'],
+  templates: './src/templates/index.js',
   dist: '.dist'
 };
