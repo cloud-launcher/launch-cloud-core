@@ -1,5 +1,7 @@
 import api from './api';
 
+import traceurRuntime from 'traceur-runtime';
+
 module.exports = config => {
   const {
     providerApis,
