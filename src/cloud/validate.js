@@ -23,10 +23,23 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
           .then(validateConfiguration)
           .then(() => { return cloud; });
 
+  function start(name, ...args) {
+    log({start: name, args});
+  }
+
+  function ok(name, ...args) {
+    log({ok: name, args});
+  }
+
+  function bad(name, ...args) {
+    log({bad: name, args});
+  }
+
   function validateDomain() {
     return new Promise((resolve, reject) => {
       if (cloud.domain) {
-        log('Validating Domain');
+        start('Domain');
+        ok('Domain');
       }
 
       resolve();
@@ -36,7 +49,8 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   function validateRoot() {
     return new Promise((resolve, reject) => {
       if (cloud.root) {
-        log('Validating Root');
+        start('Root');
+        ok('Root');
       }
 
       resolve();
@@ -46,7 +60,8 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   function validateAuthorizations() {
     return new Promise((resolve, reject) => {
       if (cloud.authorizations) {
-        log('Validating Authorizations');
+        start('Authorizations');
+        ok('Authorizations');
       }
 
       resolve();
@@ -55,7 +70,7 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
 
   function validateLocations() {
     return new Promise((resolve, reject) => {
-      log('Validating Locations');
+      start('Locations');
 
       let providerCount = 0;
       const locationCount = _.reduce(locations, (count, locations, providerName) => {
@@ -63,12 +78,14 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
 
         if (!provider) {
           reject(new Error(['No provider with name', providerName].join(' ')));
+          bad('Locations');
           return;
         }
 
         _.each(locations, location => {
           if (!provider.profile.locations[location]){
             reject(new Error(['Provider', providerName, 'has no location', location].join(' ')));
+            bad('Locations');
             return;
           }
         });
@@ -80,33 +97,57 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
 
       if (isNaN(locationCount) || locationCount === 0) {
         reject(new Error('No locations selected!'));
+        bad('Locations');
         return;
       }
 
       log(`Will Launch on ${providerCount} Provider${providerCount > 1 ? 's' : ''} in ${locationCount} Location${locationCount > 1 ? 's' : ''}!`);
 
+      ok('Locations');
       resolve();
     });
   }
 
   function validateProviderCredentials() {
     return new Promise((resolve, reject) => {
-      log('Validating Provider Credentials');
+      // log('Validating Provider Credentials');
+
+      start('Credentials');
+
+      // can probably run a map over this
+      const usedProviders = _.map(_.pick(cloud.locations, locations => {
+        return locations.length > 0;
+      }), (locations, providerName) => providers[providerName]);
+
+      console.log('used', usedProviders);
 
       const missing = {};
 
-      _.each(cloud.locations, (locations, providerName) => {
+      _.each(usedProviders, provider => {
         if (locations.length > 0) {
-          const missingValues = checkProviderConfiguration(providerName);
-          if (missingValues.length > 0) missing[providerName] = missingValues;
+          const missingValues = checkProviderConfiguration(provider);
+          if (missingValues.length > 0) missing[provider.name] = missingValues;
         }
       });
 
-      if (_.keys(missing).length > 0) reject({type: 'Credentials', missing});
-      else resolve();
+      if (_.keys(missing).length > 0) {
+        bad('Credentials');
+        reject({type: 'Credentials', missing});
+      }
+      else {
+        Promise.all(_.map(usedProviders, provider => provider.api.verifyAccount()))
+                .then((error, data, response) => {
+                  ok('Credentials');
+                  resolve();
+                })
+                .catch((error, data, response) => {
+                  bad('Credentials');
+                  reject({type: 'Credentials', error, data});
+                });
+      }
 
       function checkProviderConfiguration(providerName) {
-        const {credentialSchema, credentials} = providers[providerName],
+        const {credentialSchema, credentials} = provider,
               missing = [];
 
         _.each(credentialSchema, (schema, name) => {
@@ -126,7 +167,9 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   }
 
   function validateContainers() {
-    log('Validating Containers');
+    // log('Validating Containers');
+
+    start('Containers');
 
     let requests = {},
         validationFailed = false;
@@ -167,10 +210,14 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
           else {
             if (response.statusCode === 200) {
               if (!log(`Found ${qualifiedName}:${tag}`));
+              ok('Credentials');
               resolve();
             }
             // else reject(new Error(`Did not find ${qualifiedName}:${tag} on Docker registry!`));
-            else reject({type: 'MissingContainer', container: {qualifiedName, tag}});
+            else {
+              bad('Credentials');
+              reject({type: 'MissingContainer', container: {qualifiedName, tag}});
+            }
           }
         });
       });
@@ -185,7 +232,9 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
 
   function validateConfiguration() {
     return new Promise((resolve, reject) => {
-      log('Validating Configuration', cloud);
+      // log('Validating Configuration', cloud);
+      start('Configuration');
+      ok('Configuration');
       resolve();
     });
   }

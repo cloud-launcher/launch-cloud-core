@@ -1,6 +1,6 @@
 import api from './api';
 
-import traceurRuntime from 'traceur-runtime';
+import traceurRuntime from './traceur-runtime';
 
 module.exports = config => {
   const {

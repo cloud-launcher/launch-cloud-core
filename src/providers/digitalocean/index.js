@@ -2,9 +2,19 @@ module.exports = digitalocean;
 
 
 function digitalocean(DOWrapper, config) {
+  const status = {
+    limit: undefined,
+    remaining: undefined,
+    resetTime: undefined
+  };
+
   return {
     createMachine,
-    destroyMachine
+    destroyMachine,
+
+    verifyAccount,
+
+    status
   };
 
   function createMachine(machineDescription) {
@@ -24,10 +34,32 @@ function digitalocean(DOWrapper, config) {
     });
   }
 
+  function verifyAccount() {
+    return new Promise((resolve, reject) => {
+      const api = new DOWrapper(config.token);
+
+      api.account(apiCallbackHandler(resolve, reject));
+    });
+  }
+
   function apiCallbackHandler(resolve, reject) {
-    return (error, data) => {
-      if (error) reject(error, data);
-      else resolve(data);
+    return (error, data, response) => {
+      console.log(response);
+      response = response || data;
+
+      if (response.statusCode === 401) {
+        reject('Unauthorized', data);
+        return;
+      }
+
+      const headers = response.headers || response.getAllResponseHeaders();
+
+      status.limit = headers['RateLimit-Limit'];
+      status.remaining = headers['RateLimit-Remaining'];
+      status.reset = headers['RateLimit-Reset'];
+
+      if (error) reject(error, data, response);
+      else resolve(data, headers);
     };
   }
 }
