@@ -8,8 +8,8 @@ module.exports = config => {
     providerConfigs,
     log,
     request,
-    dockerHubApiRoot
+    proxies
   } = config;
 
-  return api(providerApis, providerConfigs, log, request, dockerHubApiRoot);
+  return api(providerApis, providerConfigs, log, request, proxies);
 };

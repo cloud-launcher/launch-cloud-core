@@ -17,14 +17,15 @@ module.exports = (providerApis, providerConfigs) => {
     rackspace
   ].reduce((providers, provider) => {
     const {$name, $targets, $credentialSchema} = provider;
-    providerConfigs[$name] = providerConfigs[$name] || {};
+    const credentials = {};
+    // providerConfigs[$name] = providerConfigs[$name] || {credentials: {}};
     providers[$name] = {
       name: $name,
       profile: profiles[$name],
       targets: $targets,
       credentialSchema: $credentialSchema,
-      credentials: {},
-      api: provider(providerApis[$name], providerConfigs[$name]),
+      credentials,
+      api: provider(providerApis[$name], credentials),
       $rawAPI: providerApis[$name]
     };
     return providers;

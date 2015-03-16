@@ -1,5 +1,6 @@
 import expand from './expand';
 import validate from './validate';
+import generatePlan from './generatePlan';
 
 import cloudConfig from '../bootstrapers/cloudConfig';
 
@@ -7,54 +8,19 @@ import _ from 'lodash';
 
 var generators = require('generator-trees').g;
 
-const dockerHubApiRoot = 'https://registry.hub.docker.com';
+const dockerHubApiRoot = 'https://registry.hub.docker.com',
+      discoveryEtcdApiRoot = 'https://discovery.etcd.io';
 
-module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
+module.exports = (cloud, providers, log, request, proxies) => {
   console.log(cloudConfig);
 
   return {launch};
 
   function launch() {
     return expand(cloud)
-            .then(cloud => validate(cloud, providers, log, request, dockerHubApiRoot))
-            .then(generatePlan)
+            .then(cloud => validate(cloud, providers, log, request, proxies.dockerHubApiRoot || dockerHubApiRoot))
+            .then(cloud => generatePlan(cloud, providers, log, request, proxies.discoveryEtcdApiRoot || discoveryEtcdApiRoot))
             .then(executePlan);
-  }
-
-  function generatePlan(config) {
-    log('Generating Launch Plan');
-
-    return new Promise((resolve, reject) => {
-      log('resolving generatePlan');
-
-      resolve({plan: 'a plan'});
-
-      // log('rejecting generatePlan', config);
-      // reject({error: 'rejected'});
-
-      //var manifest = createManifest(config);
-
-      // return {machineGenerator, launch};
-
-      // function machineGenerator() {
-      //   clusterMachineGenerators = _.map()
-      //   return generators.loopUntilEmpty(clusterMachineGenerators);
-      // }
-
-      // function createManifest(definition) {
-      //   var containers = definition.containers,
-      //       containerManifest = _.map(containers, parseContainer);
-      // }
-
-      // function parseContainer(container, name) {
-      //   return {
-      //     name,
-      //     construct: () => {
-      //       //return
-      //     }
-      //   };
-      // }
-    });
   }
 
   function executePlan(plan) {

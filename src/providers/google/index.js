@@ -2,9 +2,15 @@ module.exports = google;
 
 
 function google(api, config) {
+  const status = {};
+
   return {
     createMachine,
-    destroyMachine
+    destroyMachine,
+
+    verifyAccount,
+
+    status
   };
 
   function createMachine(machineDescription) {
@@ -28,6 +34,12 @@ function google(api, config) {
       const api = new api(config.token);
 
       // destroy code goes here
+    });
+  }
+
+  function verifyAccount() {
+    return new Promise((resolve, reject) => {
+      reject({error: 'Unauthorized', provider: google.$name});
     });
   }
 
