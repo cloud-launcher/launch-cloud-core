@@ -1,6 +1,7 @@
 import expand from './expand';
 import validate from './validate';
 import generatePlan from './generatePlan';
+import executePlan from './executePlan';
 
 import cloudConfig from '../bootstrapers/cloudConfig';
 
@@ -20,63 +21,12 @@ module.exports = (cloud, providers, log, request, proxies) => {
     return expand(cloud)
             .then(cloud => validate(cloud, providers, log, request, proxies.dockerHubApiRoot || dockerHubApiRoot))
             .then(cloud => generatePlan(cloud, providers, log, request, proxies.discoveryEtcdApiRoot || discoveryEtcdApiRoot))
-            .then(executePlan);
+            .then(plan => executePlan(plan, providers, log));
   }
 
-  function executePlan(plan) {
-    log('Executing Launch Plan');
-
-    return new Promise((resolve, reject) => {
-      launchClusters(plan).then(resolve, reject);
-    });
-  }
-
-  function launchClusters(plan) {
-    _.each(plan.locations, (locations, providerName) => {
-      var provider = providers[providerName];
-      _.each(locations, location => {
-
-      });
-    });
-    var api = acquireProviderAPI(),
-        machine = launchMachine(api);
-
-  }
-
-  function launchMachine(api) {
-
-  }
-
-  function machineGenerator() {
-    // clusterMachineGenerators = _.map();
-    return generators.loopUntilEmpty(clusterMachineGenerators);
-  }
 };
 
-function processConcurrently(generator, processorConstructor, concurrencyCount) {
-  return new Promise((resolve, reject) => {
-    var processors = createProcessors();
 
-    g.map(processors, processor => {
-//      processor.
-    });
-
-    launchMachine(machine);
-
-    function createProcessors() {
-      return g.toArray(g.map(g.repeat(processorConstructor, concurrencyCount), constructor => constructor()));
-    }
-
-    function acquireProcessor() {
-      return processors.unshift();
-    }
-
-    function returnProcessor(processor) {
-      processors.shift(processor);
-    }
-  });
-
-}
 
 
 // function* generator(q) {
@@ -135,14 +85,14 @@ function processConcurrently(generator, processorConstructor, concurrencyCount) 
 // }
 
 
-let manifest = {
-  locations: [{
-    id: '',
-    name: '',
-    provider: '',
-    machines: ['machineID']
-  }],
-  debug: {
+// let manifest = {
+//   locations: [{
+//     id: '',
+//     name: '',
+//     provider: '',
+//     machines: ['machineID']
+//   }],
+//   debug: {
 
-  }
-};
+//   }
+// };

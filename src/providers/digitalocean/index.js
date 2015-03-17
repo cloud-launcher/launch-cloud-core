@@ -16,7 +16,9 @@ function digitalocean(DOWrapper, credentials) {
 
     verifyAccount,
 
-    status
+    status,
+
+    MAX_CONCURRENT_CALLS: 5
   };
 
   function createMachine(machineDescription) {

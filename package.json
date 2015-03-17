@@ -10,6 +10,7 @@
     "babel-runtime": "^4.7.12",
     "do-wrapper": "^0.1.1",
     "generator-trees": "^0.1.1",
+    "hogan.js": "^3.0.2",
     "launch-cloud-providers": "0.0.3",
     "promise-callback": "^1.0.1"
   },

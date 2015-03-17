@@ -2,15 +2,19 @@
 
 coreos:
   etcd:
-    discovery: {{discovery_url}}
+    discovery: {{discoveryURL}}
     addr: $public_ipv4:4001
     peer-addr: $public_ipv4:7001
   fleet:
     public-ip: $public_ipv4
     metadata: {{metadata}}
 
+{{#hasAuthorizedKeys}}
   ssh_authorized_keys:
-    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDDQIwGRmmZKxKiZyWRkGk95wBUuhmyitOfJQBlhLeL7n0qDxueU+oxRH3swrWYbHY8daOAKhlzQmpqAQSoFiLzdK0N5aDRyv5U01wvzRuWbQ3Fk/2iwOUzJx2y/rDVd3NbF26EBTS+7mS2n319r1TNYsuekzMD+VpZBFymcqttoOlgNnuecytpMFj18YuB3muGRgiAWZHx0md1e3/bVuVK16VEJ8MKFPWBsRiZ667gzW5b88XZO4Zvo/wAQgp6vakMaLOinxOt0IhfsVNU/miFd0AMBPq04s+iSApxBvQ/+DbBphQT4bRfgI8w8QgfwO8Hwz4MpojeAk2Dhsvmupyp blakelapierre@gmail.com
+    {{#keys}}
+    - ssh-rsa {{key}}
+    {{/keys}}
+{{/hasAuthorizedKeys}}
 
   units:
     - name: etcd.service

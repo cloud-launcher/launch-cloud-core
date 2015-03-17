@@ -1,0 +1,18 @@
+[Unit]
+Description={{serviceName}}@%i
+
+After=etcd.service
+After=fleet.service
+After=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker kill %p.%i
+ExecStartPre=-/usr/bin/docker rm %p.%i
+ExecStartPre=/bin/sh -c "until etcdctl set /machines/$(hostname)/stats/{{serviceName}}%iPull $(date -Is); do sleep 1; done && /usr/bin/docker pull {{containerName}} && until etcdctl set /machines/$(hostname)/stats/{{serviceName}}%iPulled $(date -Is); do sleep 1; done"
+ExecStart=/usr/bin/docker run --name=%p.%i --rm --privileged {{containerName}}
+ExecStop=/usr/bin/docker stop %p.%i
+
+[X-Fleet]
+MachineMetadata=role={{roleName}}

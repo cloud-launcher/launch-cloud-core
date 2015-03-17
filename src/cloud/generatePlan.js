@@ -5,7 +5,7 @@ import gt from 'generator-trees';
 
 const {g, p} = gt;
 
-const MAX_CONCURRENTLY_DEFINED_CLUSTERS = 5;
+const MAX_CONCURRENTLY_GENERATED_CLUSTERS = 5;
 
 module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
   log = ((log) => arg => { log(arg); return arg; })(log);
@@ -72,34 +72,57 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
       start('Clusters', {clusters});
 
       p.async(
-        MAX_CONCURRENTLY_DEFINED_CLUSTERS,
-        g.map(g.toGenerator(clusterArray),
-          cluster => new Promise((resolve, reject) => {
-            start('Cluster', {cluster});
-            request(`${discoveryEtcdApiRoot}/new`, (error, response, discovery_url) => {
-              if (error) {
-                console.log('Error getting discovery url!');
-                reject(bad('Cluster', {error, cluster}));
-                return false;
-              }
-
-              cluster.machineGenerator = machineGenerator(cluster);
-
-              ok('Cluster', {cluster});
-              resolve(cluster);
-            });
-          })),
+        MAX_CONCURRENTLY_GENERATED_CLUSTERS,
+        g.map(g.toGenerator(clusterArray), assignEtcdUrl),
         (cluster, generatedSoFar) => { })
       .then(() => {
         plan.clusters = clusters;
         resolve(clusters);
       }, reject);
+
+      function assignEtcdUrl(cluster) {
+        return new Promise((resolve, reject) => {
+          start('Cluster', {cluster});
+          request(`${discoveryEtcdApiRoot}/new`, (error, response, discoveryURL) => {
+            if (error) {
+              console.log('Error getting discovery url!');
+              reject(bad('Cluster', {error, cluster}));
+              return false;
+            }
+
+            cluster.discoveryURL = discoveryURL;
+            cluster.machineGenerator = getMachineGenerator(cluster);
+
+            ok('Cluster', {cluster});
+            resolve(cluster);
+          });
+        });
+      }
     });
   }
 
-  function* machineGenerator(cluster) {
-    yield 1;
-    return 2;
+  function getMachineGenerator(cluster) {
+    return () => g.interleave(
+                  g.map(
+                    g.toGenerator(_.map(configuration, (value, roleName) => { return [roleName, value]; }))
+                    , configuration => {
+                      if (typeof value === 'number') {
+                        return g.take((function*() {
+                          while (true) {
+                            yield generateMachine(cluster, roleName);
+                          }
+                        })(), value);
+                      }
+                      else throw new Error('Can\'t handle non-number role values yet!');
+                    }));
+  }
+
+  function generateMachine(cluster, roleName) {
+    return {
+      id: uuid.v4(),
+      roleName,
+      cluster
+    };
   }
     // log('rejecting generatePlan', config);
     // reject({error: 'rejected'});

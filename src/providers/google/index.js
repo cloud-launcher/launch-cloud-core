@@ -39,7 +39,8 @@ function google(api, config) {
 
   function verifyAccount() {
     return new Promise((resolve, reject) => {
-      reject({error: 'Unauthorized', provider: google.$name});
+      resolve();
+      // reject({error: 'Unauthorized', provider: google.$name});
     });
   }
 
