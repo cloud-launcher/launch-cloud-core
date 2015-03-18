@@ -35,15 +35,15 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   return promise;
 
   function start(name, ...args) {
-    return log({type: 'Validation', start: name, args});
+    return log({type: 'Validate', start: name, args});
   }
 
   function ok(name, ...args) {
-    return log({type: 'Validation', ok: name, args});
+    return log({type: 'Validate', ok: name, args});
   }
 
   function bad(name, ...args) {
-    return log({type: 'Validation', bad: name, args});
+    return log({type: 'Validate', bad: name, args});
   }
 
   function validateDomain() {
@@ -196,8 +196,8 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
 
     function checkDockerRegistry(containerName) {
       let [namespace, image] = containerName.split('/'),
-            [repository, tag] = (image || namespace).split(':'),
-            qualifiedName = namespace + (image ? `/${repository}` : '');
+          [repository, tag] = (image || namespace).split(':'),
+          qualifiedName = namespace + (image ? `/${repository}` : '');
 
 
       tag = tag || 'latest';

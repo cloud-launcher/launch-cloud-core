@@ -33,11 +33,14 @@ coreos:
     - name: fleet.service
       command: start
 
+    - name: docker.service
+      command: start
+
     - name: bootstrap.service
       command: start
       content: |
         [Unit]
-        Description=boostraps us
+        Description=bootstraps us
 
         Requires=etcd.service
         Requires=fleet.socket

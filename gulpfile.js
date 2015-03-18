@@ -1,8 +1,7 @@
-const browserify = require('browserify'),
-      gulp = require('gulp'),
-      source = require('vinyl-source-stream');
+const gulp = require('gulp');
 
 const {
+  brfs,
   cached,
   clean,
   concat,
@@ -26,9 +25,9 @@ if (typeof result === 'string') console.log(result);
 
 gulp.task('default', ['build']);
 
-gulp.task('build', sequence('clean', 'templates', 'copyProfiles'));
+gulp.task('build', sequence('clean', 'runtime', 'copyProfiles'));
 
-gulp.task('dev', ['templates', 'copyProfiles'], () => gulp.watch(paths.scripts, ['templates']));
+gulp.task('dev', ['runtime', 'copyProfiles'], () => gulp.watch(paths.scripts.concat(paths.templates), ['runtime']));
 
 gulp.task('run', () => run(`node ${paths.dist}/index.js`).exec());
 
@@ -49,20 +48,11 @@ gulp.task('transpile', //['jshint'],
     ,sourcemaps.init()
     // ,to5()
     ,traceur({modules: 'commonjs', asyncGenerators: true, forOn: true, asyncFunctions: true})
+    ,brfs()
     ,sourcemaps.write('.')
     ,gulp.dest(paths.dist)
   ])
   .on('error', function(e) { console.log(e); }));
-
-gulp.task('templates', ['runtime'],
-  () => pipe([
-    browserify(paths.templates)
-      .transform('brfs')
-      .bundle()
-    ,source('templates/index.js')
-    ,print()
-    ,gulp.dest(paths.dist)
-  ]));
 
 gulp.task('copyProfiles',
   () => pipe([
@@ -88,6 +78,6 @@ gulp.task('clean',
 
 const paths = {
   scripts: ['src/**/*.js'],
-  templates: './src/templates/index.js',
+  templates: ['src/templates/**/*'],
   dist: '.dist'
 };

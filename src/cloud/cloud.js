@@ -3,8 +3,6 @@ import validate from './validate';
 import generatePlan from './generatePlan';
 import executePlan from './executePlan';
 
-import cloudConfig from '../bootstrapers/cloudConfig';
-
 import _ from 'lodash';
 
 var generators = require('generator-trees').g;
@@ -13,8 +11,6 @@ const dockerHubApiRoot = 'https://registry.hub.docker.com',
       discoveryEtcdApiRoot = 'https://discovery.etcd.io';
 
 module.exports = (cloud, providers, log, request, proxies) => {
-  console.log(cloudConfig);
-
   return {launch};
 
   function launch() {

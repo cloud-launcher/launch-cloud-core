@@ -15,7 +15,7 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
     configuration
   } = cloud;
 
-  const type = 'Generate Plan';
+  const type = 'Generate';
 
   function start(name, ...args) {
     return log({type, start: name, args});
@@ -29,19 +29,26 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
     return log({type, bad: name, args});
   }
 
-  start('Generation');
+  start('Plan');
 
-  return initializePlan()
+  const promise = initializePlan()
           .then(defineClusters)
           .then(plan => {
-            ok('Generation');
+            ok('Plan', {plan});
             return plan;
           });
+
+  promise.catch(error => {
+    return bad('Plan', {error});
+  });
+
+  return promise;
 
   function initializePlan() {
     return new Promise((resolve, reject) => {
       const plan = {
-        cloudID: uuid.v4()
+        cloudID: uuid.v4(),
+        definition: cloud
       };
 
       resolve(plan);
@@ -77,7 +84,7 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
         (cluster, generatedSoFar) => { })
       .then(() => {
         plan.clusters = clusters;
-        resolve(clusters);
+        resolve(plan);
       }, reject);
 
       function assignEtcdUrl(cluster) {
@@ -94,7 +101,7 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
             cluster.machineGenerator = getMachineGenerator(cluster);
 
             ok('Cluster', {cluster});
-            resolve(cluster);
+            resolve(plan);
           });
         });
       }
@@ -104,8 +111,10 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
   function getMachineGenerator(cluster) {
     return () => g.interleave(
                   g.map(
-                    g.toGenerator(_.map(configuration, (value, roleName) => { return [roleName, value]; }))
-                    , configuration => {
+                    g.toGenerator(_.map(configuration, (value, roleName) => { return [roleName, value]; })),
+                    configuration => {
+                      const [roleName, value] = configuration;
+
                       if (typeof value === 'number') {
                         return g.take((function*() {
                           while (true) {
@@ -124,29 +133,4 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
       cluster
     };
   }
-    // log('rejecting generatePlan', config);
-    // reject({error: 'rejected'});
-
-    //var manifest = createManifest(config);
-
-    // return {machineGenerator, launch};
-
-    // function machineGenerator() {
-    //   clusterMachineGenerators = _.map()
-    //   return generators.loopUntilEmpty(clusterMachineGenerators);
-    // }
-
-    // function createManifest(definition) {
-    //   var containers = definition.containers,
-    //       containerManifest = _.map(containers, parseContainer);
-    // }
-
-    // function parseContainer(container, name) {
-    //   return {
-    //     name,
-    //     construct: () => {
-    //       //return
-    //     }
-    //   };
-    // }
 };

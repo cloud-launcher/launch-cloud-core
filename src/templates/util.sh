@@ -9,9 +9,9 @@ function waitForFleet() {
 }
 
 function fleetSubmit() {
-  until fleetctl submit $1; do echo 'fleet not ready...sleeping' && sleep 1; done
+  until fleetctl submit $1; do echo 'fleetctl not ready...sleeping' && sleep 1; done
 }
 
 function fleetStart() {
-  until fleetctl start $1; do echo 'fleect not ready...sleeping' && sleep 1; done
+  until fleetctl start $1; do echo 'fleectl not ready...sleeping' && sleep 1; done
 }

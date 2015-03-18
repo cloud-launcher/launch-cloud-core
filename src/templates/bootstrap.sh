@@ -17,15 +17,11 @@ cd /home/core
 
 source util.sh
 
-function set {
-  until etcdctl set $1 $2; do echo 'etcd not ready...sleeping' && sleep 1; done
-}
-
 setEtcd /machines/$(hostname)/stats/on $(TIME="@$(grep btime /proc/stat | cut -d ' ' -f2)" && date --date=$TIME -Is)
 setEtcd /machines/$(hostname)/stats/joindate $(date -Is)
 #until etcdctl set /machines/$(hostname)/"$(date)" 1; do echo 'etcd not ready...sleeping' && sleep 1; done
 
-waitForFleet()
+waitForFleet
 
 {{#services}}
 fleetSubmit {{fileName}}
