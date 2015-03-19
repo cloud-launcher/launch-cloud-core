@@ -180,6 +180,8 @@ module.exports = (plan, providers, log) => {
   }
 
   function getQualifiedContainerName(containerName) {
+    if (containerName === 'cadvisor') return 'google/cadvisor';
+
     if (!definition.containers) return containerName;
 
     const container = definition.containers[containerName];
