@@ -2,6 +2,7 @@ import expand from './expand';
 import validate from './validate';
 import generatePlan from './generatePlan';
 import executePlan from './executePlan';
+import destroyCloud from './destroy';
 
 import _ from 'lodash';
 
@@ -11,15 +12,23 @@ const dockerHubApiRoot = 'https://registry.hub.docker.com',
       discoveryEtcdApiRoot = 'https://discovery.etcd.io';
 
 module.exports = (cloud, providers, log, request, proxies) => {
-  return {launch};
+  return {launch, destroy};
 
   function launch() {
     return expand(cloud)
             .then(cloud => validate(cloud, providers, log, request, proxies.dockerHubApiRoot || dockerHubApiRoot))
             .then(cloud => generatePlan(cloud, providers, log, request, proxies.discoveryEtcdApiRoot || discoveryEtcdApiRoot))
-            .then(plan => executePlan(plan, providers, log));
+            .then(plan => executePlan(plan, providers, log))
+            .then(launchedCloud => {
+              launchedCloud.configuration = _.cloneDeep(cloud);
+              console.log('launchedCloud', launchedCloud);
+              return launchedCloud;
+            });
   }
 
+  function destroy() {
+    return destroyCloud(cloud, providers, log);
+  }
 };
 
 

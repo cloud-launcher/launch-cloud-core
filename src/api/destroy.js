@@ -1,3 +1,5 @@
-module.exports = (cloud, providers) => {
-  console.log('we destroyin\'');
-};
+import cloud from '../cloud/cloud';
+
+module.exports =
+  (cloudDescription, providers, log) =>
+  cloud(cloudDescription, providers, log).destroy();

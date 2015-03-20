@@ -5,14 +5,18 @@
 cd /home/core
 
 (
-  SWAPSIZE=4G
-  SWAPFILE=/${SWAPSIZE}iB.swap
-  sudo /usr/bin/fallocate -l ${SWAPSIZE} ${SWAPFILE};
-  sudo /usr/bin/chmod 600 ${SWAPFILE};
-  sudo /usr/bin/chattr +C ${SWAPFILE};
-  sudo /usr/sbin/mkswap ${SWAPFILE};
-  sudo /usr/sbin/losetup -f ${SWAPFILE};
-  sudo /usr/sbin/swapon $(/usr/sbin/losetup -j ${SWAPFILE} | /usr/bin/cut -d : -f 1);
+  if free | awk '/^Swap:/ {exit !$2}'; then
+      echo "Have swap"
+  else
+      SWAPSIZE=4G
+      SWAPFILE=/${SWAPSIZE}iB.swap
+      sudo /usr/bin/fallocate -l ${SWAPSIZE} ${SWAPFILE};
+      sudo /usr/bin/chmod 600 ${SWAPFILE};
+      sudo /usr/bin/chattr +C ${SWAPFILE};
+      sudo /usr/sbin/mkswap ${SWAPFILE};
+      sudo /usr/sbin/losetup -f ${SWAPFILE};
+      sudo /usr/sbin/swapon $(/usr/sbin/losetup -j ${SWAPFILE} | /usr/bin/cut -d : -f 1);
+  fi
 ) &
 
 source util.sh

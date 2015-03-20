@@ -10,7 +10,7 @@ TimeoutStartSec=0
 Restart=always
 ExecStartPre=-/usr/bin/docker kill %p
 ExecStartPre=-/usr/bin/docker rm %p
-ExecStartPre=/bin/sh -c "until etcdctl set /machines/$(hostname)/stats/{{containerName}}Pull $(date -Is); do sleep 1; done && /usr/bin/docker pull {{containerName}} && until etcdctl set /machines/$(hostname)/stats/{{containerName}}Pulled $(date -Is); do sleep 1; done"
+ExecStartPre=/bin/sh -c "until etcdctl set /machines/$(hostname)/stats/{{statsContainerName}}Pull $(date -Is); do sleep 1; done && /usr/bin/docker pull {{containerName}} && until etcdctl set /machines/$(hostname)/stats/{{statsContainerName}}Pulled $(date -Is); do sleep 1; done"
 ExecStart=/usr/bin/docker run --name=%p --rm {{options}} {{containerName}}
 ExecStop=/usr/bin/docker stop %p
 

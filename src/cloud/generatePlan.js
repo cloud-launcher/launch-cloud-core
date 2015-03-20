@@ -84,6 +84,7 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
         (cluster, generatedSoFar) => { })
       .then(() => {
         plan.clusters = clusters;
+        ok('Clusters', {clusters});
         resolve(plan);
       }, reject);
 
@@ -130,7 +131,8 @@ module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
     return {
       id: uuid.v4(),
       roleName,
-      cluster
+      cluster,
+      generatedAt: new Date()
     };
   }
 };

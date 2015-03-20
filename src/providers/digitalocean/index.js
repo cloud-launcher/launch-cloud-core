@@ -26,7 +26,21 @@ function digitalocean(DOWrapper, credentials) {
       var api = new DOWrapper(credentials.token);
 
       var {id, location, size, image, keys, userData} = machineDescription;
-      api.dropletsCreateNewDroplet(id, location, size, image, {ssh_keys: keys, user_data: userData}, apiCallbackHandler(resolve, reject));
+      api.dropletsCreateNewDroplet(
+        id,
+        location,
+        size,
+        image,
+        {ssh_keys: keys, user_data: userData},
+        apiCallbackHandler((data, headers) => {
+          const {droplet} = data,
+                response = {
+                  id: droplet.id,
+                  createdAt: droplet.created_at
+                };
+          resolve(response);
+          console.log('data', data, response);
+        }, reject));
     });
   }
 
@@ -34,7 +48,7 @@ function digitalocean(DOWrapper, credentials) {
     return new Promise((resolve, reject) => {
       var api = new DOWrapper(credentials.token);
 
-      api.dropletsDeleteDroplet(machine.response.droplet.id, apiCallbackHandler(resolve, reject));
+      api.dropletsDeleteDroplet(machine.response.id, apiCallbackHandler(resolve, reject));
     });
   }
 

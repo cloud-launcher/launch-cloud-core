@@ -16,6 +16,7 @@ module.exports = (plan, providers, log) => {
   console.log(plan);
 
   const {
+    cloudID,
     definition,
     clusters
   } = plan;
@@ -46,9 +47,26 @@ module.exports = (plan, providers, log) => {
 
       const launchPromise =
         Promise.all(_.map(clustersByProvider, launchProviderClusters))
-                .then(() => {
-                  ok('Plan');
-                  resolve();
+                .then(providerClusters => {
+                  console.log('providerClusters', providerClusters);
+
+                  const clusters = _.reduce(providerClusters, (result, clusters) => {
+                      _.each(clusters, (cluster, id) => {
+                        result[id] = cluster;
+                        cluster.machineCount = _.keys(cluster.machines).length;
+                      });
+
+                      return result;
+                    }, {});
+
+                  const cloud = {
+                    id: cloudID,
+                    clusters,
+                    clusterCount: _.keys(clusters).length
+                  };
+
+                  ok('Plan', {cloud});
+                  resolve(cloud);
                 });
 
       launchPromise.catch(error => {
@@ -60,61 +78,90 @@ module.exports = (plan, providers, log) => {
   }
 
   function launchProviderClusters(clusters, providerName) {
-    const provider = providers[providerName];
+    console.log('clusters', clusters);
+    return new Promise((resolve, reject) => {
+      const provider = providers[providerName],
+            launchedClusters = _.reduce(clusters, (result, cluster) => {
+              const {id, location, discoveryURL} = cluster;
 
-    return p.async(provider.api.MAX_CONCURRENT_CALLS,
-                    g.map(
-                      g.interleave(
-                        g.map(
-                          g.toGenerator(clusters),
-                          cluster => cluster.machineGenerator())),
-                      machineDef => new Promise((resolve, reject) => {
-                        const {id: machineID, roleName, cluster} = machineDef,
-                              {id: clusterID, location, providerName, discoveryURL} = cluster;
+              result[id] = {
+                id,
+                discoveryURL,
+                location,
+                machines: {},
+                provider: providerName
+              };
 
-                        const size = '512mb',
-                              image = 'coreos-stable';
+              return result;
+            }, {});
 
-                        const machine = {
-                          id: machineID,
-                          location,
-                          size,
-                          image,
-                          roleName,
-                          keys: definition.authorizations
-                        };
+      start('Provider', {providerName});
 
-                        console.log('machine', machineDef, machine);
+      p.async(
+        provider.api.MAX_CONCURRENT_CALLS,
+        g.map(
+          g.interleave(
+            g.map(g.toGenerator(clusters), cluster => cluster.machineGenerator())
+          ),
+          machineDef => new Promise((resolve, reject) => {
+            const {id, roleName, cluster, generatedAt} = machineDef,
+                  {id: clusterID, location, providerName, discoveryURL} = cluster;
 
-                        const files = getFiles(machine);
+            const size = '512mb',
+                  image = 'coreos-stable';
 
+            const files = getFiles(id, roleName),
+                  metadata = _.map({id, clusterID, provider: providerName, location, size, image, roleName, generatedAt}, (value, key) => `${key}=${value}`).join(','),
+                  userData = templates.cloudConfig.render({discoveryURL, metadata, files});
 
-                        const metadata = _.map(machine, (value, key) => `${key}=${value}`).join(',');
+            const machine = {
+              id,
+              clusterID,
+              provider: providerName,
+              location,
+              size,
+              image,
+              roleName,
+              keys: definition.authorizations,
+              generatedAt,
+              userData
+            };
 
-                        machine.userData = templates.cloudConfig.render({discoveryURL, metadata, files});
+            start('Machine', {machine});
 
-                        start('Machine', {machine});
+            // ok('Machine', {machine});
+            // resolve(machine);
 
-                        // ok('Machine', {machineDef});
-                        // resolve(machine);
+            provider
+              .api
+              .createMachine(machine)
+              .then(
+                response => {
+                  machine.response = response;
+                  ok('Machine', {machine, machineDef});
+                  resolve(machine);
+                },
+                error => reject(bad('Machine', {machine, machineDef, error}))
+              );
+          })),
+        (machine, machinesGeneratedSoFar) => {
+          launchedClusters[machine.clusterID].machines[machine.id] = _.pick(machine, ['size', 'image', 'roleName', 'generatedAt', 'response', 'id']);
 
-                        provider
-                          .api
-                          .createMachine(machine)
-                          .then(response => {
-                            ok('Machine', {machine, machineDef});
-                            resolve(machine);
-                          })
-                          .catch(reject);
-                      })),
-                    (machine, machinesGeneratedSoFar) => {
-                      console.log(machinesGeneratedSoFar, machine);
-                    });
+          console.log(machinesGeneratedSoFar, machine);
+        }
+      )
+      .then(
+        count => {
+          ok('Provider', {providerName});
+          resolve(launchedClusters);
+        },
+        error => reject(bad('Provider', {providerName, error}))
+      );
+    });
   }
 
-  function getFiles(machine) {
-    const {id, roleName} = machine,
-          containerNames = definition.roles[roleName];
+  function getFiles(id, roleName) {
+    const containerNames = definition.roles[roleName];
 
     console.log('containerNames', containerNames, definition, roleName);
 
@@ -152,7 +199,8 @@ module.exports = (plan, providers, log) => {
     let isGlobal = _.contains(definition.roles.$all || [], containerName),
         template = isGlobal ? templates.containerService : templates['container@Service'],
         serviceName = containerName + (isGlobal ? '' : '@'),
-        options = '';
+        container = definition.containers[containerName] || {},
+        options = container.options;
 
 
     if (containerName === 'cadvisor') options = '-v /:/rootfs:ro -v /var/run:/var/run:rw -v /sys:/sys:ro -v /var/lib/docker:/var/lib/docker:ro -p 8080:8080';
@@ -165,6 +213,7 @@ module.exports = (plan, providers, log) => {
       content: template.render({
         serviceName,
         containerName,
+        statsContainerName: containerName.replace('/', '_'),
         roleName,
         options,
         isGlobal

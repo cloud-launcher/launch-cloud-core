@@ -8,7 +8,7 @@ module.exports = (providerApis, providerConfigs, log, request, proxies) => {
 
   return {
     providers,
-    launch:  (cloud, launchLog) => launch(cloud, providers, launchLog || log, request, proxies),
-    destroy: cloud => destroy(cloud, providers, log)
+    launch:  (cloud, launchLog)  => launch (cloud, providers, launchLog  || log, request, proxies),
+    destroy: (cloud, destroyLog) => destroy(cloud, providers, destroyLog || log)
   };
 };
