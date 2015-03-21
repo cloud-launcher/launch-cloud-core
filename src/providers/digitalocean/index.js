@@ -1,3 +1,4 @@
+import promise from 'promise-callback';
 import _ from 'lodash';
 
 module.exports = digitalocean;
@@ -14,6 +15,8 @@ function digitalocean(DOWrapper, credentials) {
     createMachine,
     destroyMachine,
 
+    listMachines,
+
     verifyAccount,
 
     status,
@@ -22,55 +25,97 @@ function digitalocean(DOWrapper, credentials) {
   };
 
   function createMachine(machineDescription) {
-    return new Promise((resolve, reject) => {
-      var api = new DOWrapper(credentials.token);
+    const api = getApi(),
+          {id, location, size, image, keys, userData} = machineDescription;
 
-      var {id, location, size, image, keys, userData} = machineDescription;
-      api.dropletsCreateNewDroplet(
-        id,
-        location,
-        size,
-        image,
-        {ssh_keys: keys, user_data: userData},
-        apiCallbackHandler((data, headers) => {
-          const {droplet} = data,
-                response = {
-                  id: droplet.id,
-                  createdAt: droplet.created_at
-                };
-          resolve(response);
-          console.log('data', data, response);
-        }, reject));
+    return promise(
+      api.dropletsCreateNewDroplet.bind(api),
+      id, location, size, image, {ssh_keys: keys, user_data: userData}
+    )
+    .then(handleApiResponse, handleApiError)
+    .then(value => {
+      const [data, header, response] = value,
+            {droplet} = data,
+            doIdentifier = {
+              id: droplet.id,
+              createdAt: droplet.created_at
+            };
+
+      return doIdentifier;
     });
   }
 
   function destroyMachine(machine) {
-    return new Promise((resolve, reject) => {
-      var api = new DOWrapper(credentials.token);
+    var api = getApi();
 
-      api.dropletsDeleteDroplet(machine.response.id, apiCallbackHandler(resolve, reject));
+    return promise(
+      api.dropletsDeleteDroplet.bind(api),
+      machine.response.id
+    )
+    .then(handleApiResponse)
+    .then(value => {
+      return {success: true};
+    });
+  }
+
+  function listMachines() {
+    const api = getApi();
+
+    return promise(
+      api.dropletsGetAll.bind(api)
+    )
+    .then(handleApiResponse)
+    .then(value => {
+      const [data] = value,
+            {droplets} = data;
+
+      return _.reduce(droplets, (result, droplet) => {
+        const {created_at: createdAt, name, networks, status} = droplet;
+
+        result[name] = {
+          createdAt,
+          networks,
+          status
+        };
+
+        return result;
+      }, {});
     });
   }
 
   function verifyAccount() {
-    return new Promise((resolve, reject) => {
-      console.log('credentials', credentials);
-      const api = new DOWrapper(credentials.token);
+    const api = new DOWrapper(credentials.token);
 
-      api.account(apiCallbackHandler(resolve, reject, data => {
-        status.machineLimit = data.account.droplet_limit;
-      }));
+    return promise(
+      api.account.bind(api)
+    )
+    .then(handleApiResponse)
+    .then(value => {
+      const [data] = value;
+
+      status.machineLimit = data.account.droplet_limit;
     });
+    // return new Promise((resolve, reject) => {
+    //   const api = new DOWrapper(credentials.token);
+
+    //   api.account(apiCallbackHandler(resolve, reject, data => {
+    //     status.machineLimit = data.account.droplet_limit;
+    //   }));
+    // });
   }
 
-  function apiCallbackHandler(resolve, reject, hook) {
-    return (error, data, response) => {
-      response = response || data;
+  function getApi() {
+    return new DOWrapper(credentials.token, 1000);
+  }
 
-      if (response.statusCode === 401) {
-        reject({error: 'Unauthorized', data, response, provider: digitalocean.$name});
-        return;
-      }
+  function handleApiResponse(value) {
+    return new Promise((resolve, reject) => {
+      let data, response;
+
+      if (Array.isArray(value)) [data, response] = value;
+      else data = response = value;
+
+      response = response || data;
 
       const headers = response.headers || getResponseHeaders(response, ['RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset']);
 
@@ -78,14 +123,23 @@ function digitalocean(DOWrapper, credentials) {
       status.remaining = parseInt(headers['RateLimit-Remaining'] || '0');
       status.reset = new Date(parseInt(headers['RateLimit-Reset'] || '0') * 1000);
 
-      // Not really sure we should be passing the name here
-      if (error) reject({error, data, response, provider: digitalocean.$name});
-      else {
-        // This should really go away. Probably should promisify the entire DOWrapper
-        if (hook) hook(data, headers);
-        resolve(data, headers);
+      resolve(value);
+    });
+  }
+
+  function handleApiError(value) {
+    return new Promise((resolve, reject) => {
+      const {error, args} = value;
+      let [data, response] = args;
+
+      response = response || data;
+
+      if (response.statusCode === 401) {
+        reject({error: 'Unauthorized', data, response, provider: digitalocean.$name});
+        return;
       }
-    };
+      reject({error, data, response, provider: digitalocean.$name});
+    });
   }
 
   function getResponseHeaders(response, headers) {
