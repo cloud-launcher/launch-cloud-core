@@ -74,7 +74,13 @@ function digitalocean(DOWrapper, credentials) {
 
         result[name] = {
           createdAt,
-          networks,
+          networks: {
+            v4: _.map(networks.v4, network => {
+              const {ip_address: ipAddress, netmask, gateway, type} = network;
+              return {ipAddress, netmask, gateway, type};
+            }),
+            v6: networks.v6
+          },
           status
         };
 
@@ -152,6 +158,8 @@ function digitalocean(DOWrapper, credentials) {
 
 digitalocean.$name = 'digitalocean';
 digitalocean.$targets = ['coreos'];
+digitalocean.$dashboardUrl = 'https://cloud.digitalocean.com';
+digitalocean.$referralUrl = 'https://www.digitalocean.com/?refcode=4df1a6f6f727';
 digitalocean.$credentialSchema = {
   token: {
     type: 'string',

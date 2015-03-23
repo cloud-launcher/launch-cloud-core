@@ -16,18 +16,20 @@ module.exports = (providerApis, providerConfigs) => {
     microsoft,
     rackspace
   ].reduce((providers, provider) => {
-    const {$name, $targets, $credentialSchema} = provider;
-    const credentials = {};
-    // providerConfigs[$name] = providerConfigs[$name] || {credentials: {}};
+    const {$name, $targets, $dashboardUrl, $credentialSchema} = provider,
+          credentials = {};
+
     providers[$name] = {
+      api: provider(providerApis[$name], credentials),
+      credentialSchema: $credentialSchema,
+      credentials,
+      dashboardUrl: $dashboardUrl,
       name: $name,
       profile: profiles[$name],
       targets: $targets,
-      credentialSchema: $credentialSchema,
-      credentials,
-      api: provider(providerApis[$name], credentials),
       $rawAPI: providerApis[$name]
     };
+
     return providers;
   }, {});
 };
