@@ -70,9 +70,10 @@ function digitalocean(DOWrapper, credentials) {
             {droplets} = data;
 
       return _.reduce(droplets, (result, droplet) => {
-        const {created_at: createdAt, name, networks, status} = droplet;
+        const {id, created_at: createdAt, name, networks, status} = droplet;
 
         result[name] = {
+          id,
           createdAt,
           networks: {
             v4: _.map(networks.v4, network => {
