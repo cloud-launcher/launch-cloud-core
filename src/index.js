@@ -4,12 +4,12 @@ import traceurRuntime from './traceur-runtime';
 
 module.exports = config => {
   const {
-    providerApis,
+    providers,
     providerConfigs,
     log,
     request,
     proxies
   } = config;
 
-  return api(providerApis, providerConfigs, log, request, proxies);
+  return api(providers, providerConfigs, log, request, proxies);
 };

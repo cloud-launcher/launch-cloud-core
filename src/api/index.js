@@ -1,10 +1,10 @@
 import launch from './launch';
 import destroy from './destroy';
 
-import providersInjector from '../providers';
+// import providersInjector from '../providers';
 
-module.exports = (providerApis, providerConfigs, log, request, proxies) => {
-  const providers = providersInjector(providerApis, providerConfigs);
+module.exports = (providers, providerConfigs, log, request, proxies) => {
+  // const providers = providersInjector(providers, providerConfigs);
 
   return {
     providers,
