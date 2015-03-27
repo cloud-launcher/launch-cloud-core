@@ -138,6 +138,7 @@ module.exports = (plan, providers, log) => {
               .then(
                 response => {
                   machine.response = response;
+                  machine.providerData = response;
                   ok('Machine', {machine, machineDef});
                   resolve(machine);
                 },
@@ -145,7 +146,7 @@ module.exports = (plan, providers, log) => {
               );
           })),
         (machine, machinesGeneratedSoFar) => {
-          launchedClusters[machine.clusterID].machines[machine.id] = _.pick(machine, ['size', 'image', 'roleName', 'generatedAt', 'response', 'id']);
+          launchedClusters[machine.clusterID].machines[machine.id] = _.pick(machine, ['size', 'image', 'roleName', 'generatedAt', 'response', 'id', 'providerData']);
 
           console.log(machinesGeneratedSoFar, machine);
         }
