@@ -45,9 +45,14 @@ module.exports = cloud => new Promise((resolve, reject) => {
     _.each(roles, (roleConfiguration, roleName) => {
       if (roleName === '$all') return;
 
-      if (!containers[roleName]) {
-        containers[roleName] = {container: roleName};
+      if (Array.isArray(roleConfiguration)) {
+        _.each(roleConfiguration, containerName => {
+          if (!containers[containerName]) {
+            containers[containerName] = {container: containerName};
+          }
+        });
       }
+      else throw new Error(`What is this role:? ${roleName}`);
     });
   }
 });
