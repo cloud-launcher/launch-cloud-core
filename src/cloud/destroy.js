@@ -1,31 +1,17 @@
+import buildLog from './buildLog';
+
 import _ from 'lodash';
 import gt from 'generator-trees';
 
 const {g, p} = gt;
 
-module.exports = (cloud, providers, log) => {
-  log = ((log) => arg => { log(arg); return arg; })(log);
-
-  const type = 'Destroy';
-
-  console.log(cloud);
+module.exports = (cloud, providers, logFn) => {
+  const {log, start, ok, bad} = buildLog(logFn, 'Destroy');
 
   const {
     id,
     clusters
   } = cloud;
-
-  function start(name, ...args) {
-    return log({type, start: name, args});
-  }
-
-  function ok(name, ...args) {
-    return log({type, ok: name, args});
-  }
-
-  function bad(name, ...args) {
-    return log({type, bad: name, args});
-  }
 
   return destroy(cloud);
 

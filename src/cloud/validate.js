@@ -1,7 +1,9 @@
+import buildLog from './buildLog';
+
 import _ from 'lodash';
 
-module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
-  log = ((log) => arg => { log(arg); return arg; })(log);
+module.exports = (cloud, providers, logFn, request, dockerHubApiRoot) => {
+  const {log, start, ok, bad} = buildLog(logFn, 'Validate');
 
   start('Cloud Description');
 
@@ -33,18 +35,6 @@ module.exports = (cloud, providers, log, request, dockerHubApiRoot) => {
   });
 
   return promise;
-
-  function start(name, ...args) {
-    return log({type: 'Validate', start: name, args});
-  }
-
-  function ok(name, ...args) {
-    return log({type: 'Validate', ok: name, args});
-  }
-
-  function bad(name, ...args) {
-    return log({type: 'Validate', bad: name, args});
-  }
 
   function validateDomain() {
     return new Promise((resolve, reject) => {

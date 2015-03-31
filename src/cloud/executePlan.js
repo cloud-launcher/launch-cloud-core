@@ -1,19 +1,16 @@
+import buildLog from './buildLog';
+
+import templates from '../templates';
+
 import _ from 'lodash';
 import gt from 'generator-trees';
-import templates from '../templates';
 
 var fs = require('fs');
 
-// var templates = require('../templates');
-
 const {g, p} = gt;
 
-module.exports = (plan, providers, log) => {
-  log = ((log) => arg => { log(arg); return arg; })(log);
-
-  const type = 'Execute';
-
-  console.log(plan);
+module.exports = (plan, providers, logFn) => {
+  const {log, start, ok, bad} = buildLog(logFn, 'Execute');
 
   const {
     cloudID,
@@ -21,35 +18,17 @@ module.exports = (plan, providers, log) => {
     clusters
   } = plan;
 
-  function start(name, ...args) {
-    return log({type, start: name, args});
-  }
-
-  function ok(name, ...args) {
-    return log({type, ok: name, args});
-  }
-
-  function bad(name, ...args) {
-    return log({type, bad: name, args});
-  }
-
   return launch();
 
   function launch() {
-    console.log(plan);
-
     return new Promise((resolve, reject) => {
       start('Plan');
 
       const clustersByProvider = _.groupBy(plan.clusters, cluster => { return cluster.providerName; });
 
-      console.log('clustersByProvider', clustersByProvider);
-
       const launchPromise =
         Promise.all(_.map(clustersByProvider, launchProviderClusters))
                 .then(providerClusters => {
-                  console.log('providerClusters', providerClusters);
-
                   const clusters = _.reduce(providerClusters, (result, clusters) => {
                       _.each(clusters, (cluster, id) => {
                         result[id] = cluster;
@@ -78,7 +57,6 @@ module.exports = (plan, providers, log) => {
   }
 
   function launchProviderClusters(clusters, providerName) {
-    console.log('clusters', clusters);
     return new Promise((resolve, reject) => {
       const provider = providers[providerName],
             launchedClusters = _.reduce(clusters, (result, cluster) => {
@@ -147,8 +125,6 @@ module.exports = (plan, providers, log) => {
           })),
         (machine, machinesGeneratedSoFar) => {
           launchedClusters[machine.clusterID].machines[machine.id] = _.pick(machine, ['size', 'image', 'roleName', 'generatedAt', 'response', 'id', 'providerData']);
-
-          console.log(machinesGeneratedSoFar, machine);
         }
       )
       .then(
@@ -163,8 +139,6 @@ module.exports = (plan, providers, log) => {
 
   function getFiles(id, roleName) {
     const containerNames = definition.roles[roleName];
-
-    console.log('containerNames', containerNames, definition, roleName);
 
     const bootstrap = {
       path: '/home/core/bootstrap.sh',
@@ -196,7 +170,6 @@ module.exports = (plan, providers, log) => {
   }
 
   function makeFileRecord(roleName, containerName) {
-    console.log('makeFileRecord', roleName, containerName);
     let isGlobal = _.contains(definition.roles.$all || [], containerName),
         template = isGlobal ? templates.containerService : templates['container@Service'],
         serviceName = containerName + (isGlobal ? '' : '@'),

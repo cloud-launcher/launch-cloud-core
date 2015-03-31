@@ -1,33 +1,21 @@
 import _ from 'lodash';
 import uuid from 'uuid';
 
+import buildLog from './buildLog';
+
 import gt from 'generator-trees';
 
 const {g, p} = gt;
 
 const MAX_CONCURRENTLY_GENERATED_CLUSTERS = 5;
 
-module.exports = (cloud, providers, log, request, discoveryEtcdApiRoot) => {
-  log = ((log) => arg => { log(arg); return arg; })(log);
+module.exports = (cloud, providers, logFn, request, discoveryEtcdApiRoot) => {
+  const {log, start, ok, bad} = buildLog(logFn, 'Generate');
 
   const {
     locations,
     configuration
   } = cloud;
-
-  const type = 'Generate';
-
-  function start(name, ...args) {
-    return log({type, start: name, args});
-  }
-
-  function ok(name, ...args) {
-    return log({type, ok: name, args});
-  }
-
-  function bad(name, ...args) {
-    return log({type, bad: name, args});
-  }
 
   start('Plan');
 
