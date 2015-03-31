@@ -1,6 +1,6 @@
 
 module.exports = function buildLog(logFn, type) {
-  const log = ((log) => arg => { log(arg); return arg; })(logFn);
+  const log = ((log) => (...args) => { log(...args); return args; })(logFn);
 
   return {log, start, ok, bad};
 
