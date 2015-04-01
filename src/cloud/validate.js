@@ -121,7 +121,6 @@ module.exports = (cloud, providers, logFn, request, dockerHubApiRoot) => {
       const missing = {};
 
       _.each(usedProviders, provider => {
-        console.log(provider);
         const missingValues = checkProviderConfiguration(provider);
         if (missingValues.length > 0) missing[provider.name] = missingValues;
       });
@@ -147,8 +146,6 @@ module.exports = (cloud, providers, logFn, request, dockerHubApiRoot) => {
 
         _.each(credentialSchema, (schema, name) => {
           const value = credentials[name];
-
-          console.log(name, value);
 
           // Just basic checks for now
           if (value === undefined ||
@@ -179,39 +176,48 @@ module.exports = (cloud, providers, logFn, request, dockerHubApiRoot) => {
         log('Aborting', url);
         request.abort();
       });
-      validationFailed = true;
+      bad('Containers');
     });
 
-    return validationPromise;
+    return validationPromise
+            .then(value => {
+              ok('Containers');
+              return value;
+            });
 
     function checkDockerRegistry(containerName) {
-      let [namespace, image] = containerName.split('/'),
-          [repository, tag] = (image || namespace).split(':'),
-          qualifiedName = namespace + (image ? `/${repository}` : '');
-
-
-      tag = tag || 'latest';
-      const url = `${dockerHubApiRoot}/v1/repositories/${qualifiedName}/tags/${tag}`;
-      log(`Verifying container ${qualifiedName}:${tag} exists...`);
       return new Promise((resolve, reject) => {
         start('Container', {containerName});
+
+        const matches = containerName.match(/([^\/]*)(?:\/([^:]*))?(?::(\w*))?/);
+
+        if (!matches) {
+          reject(bad('Container', {containerName, message: 'Could not parse'}));
+          return;
+        }
+
+        const namespace = matches[1],
+              image = matches[2],
+              tag = matches[3] || 'latest',
+              qualifiedName = namespace + (image ? `/${image}` : ''),
+              url = `${dockerHubApiRoot}/v1/repositories/${qualifiedName}/tags/${tag}`;
+
         requests[url] = request(url, (error, response, body) => {
           delete requests[url];
 
-          // if (error) reject(new Error(['Error checking Docker registry', error].join(' ')));
-          if (error) reject({type: 'HubConnection', error: 'Could not connect!'});
+          if (error) reject({type: 'HubConnection', message: 'Could not connect!', error});
           else {
-            if (response.statusCode === 200) {
-              if (!log(`Found ${qualifiedName}:${tag}`));
-              ok('Container', {containerName});
-              ok('Containers');
+            const {statusCode} = response;
+
+            if (statusCode === 200) {
+              ok('Container', {containerName, tag});
               resolve();
             }
-            // else reject(new Error(`Did not find ${qualifiedName}:${tag} on Docker registry!`));
+            else if (statusCode === 404) {
+              reject(bad('Container', {containerName, tag, message: 'Does not exist!'}));
+            }
             else {
-              bad('Container', {containerName});
-              bad('Containers');
-              reject({type: 'MissingContainer', container: {qualifiedName, tag}});
+              reject(bad('Container', {containerName, tag, statusCode}));
             }
           }
         });

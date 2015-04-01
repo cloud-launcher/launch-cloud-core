@@ -81,7 +81,6 @@ module.exports = (cloud, providers, logFn, request, discoveryEtcdApiRoot) => {
           start('Cluster', {cluster});
           request(`${discoveryEtcdApiRoot}/new`, (error, response, discoveryURL) => {
             if (error) {
-              console.log('Error getting discovery url!');
               reject(bad('Cluster', {error, cluster}));
               return false;
             }

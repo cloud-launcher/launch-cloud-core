@@ -6,8 +6,6 @@ import destroyCloud from './destroy';
 
 import _ from 'lodash';
 
-var generators = require('generator-trees').g;
-
 const dockerHubApiRoot = 'https://registry.hub.docker.com',
       discoveryEtcdApiRoot = 'https://discovery.etcd.io';
 
@@ -21,7 +19,6 @@ module.exports = (cloud, providers, log, request, proxies) => {
             .then(plan => executePlan(plan, providers, log))
             .then(launchedCloud => {
               launchedCloud.configuration = _.cloneDeep(cloud);
-              console.log('launchedCloud', launchedCloud);
               return launchedCloud;
             });
   }

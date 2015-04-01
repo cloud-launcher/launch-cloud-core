@@ -15,7 +15,9 @@ ExecStart=/usr/bin/docker run --name=%p --rm {{options}} {{containerName}}
 ExecStop=/usr/bin/docker stop %p
 
 [X-Fleet]
+{{^isGlobal}}
 MachineMetadata=roleName={{roleName}}
+{{/isGlobal}}
 {{#isGlobal}}
 Global=true
 {{/isGlobal}}

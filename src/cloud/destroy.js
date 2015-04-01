@@ -36,7 +36,7 @@ module.exports = (cloud, providers, logFn) => {
   function destroyProviderClusters(clusters, providerName) {
     return new Promise((resolve, reject) => {
       const provider = providers[providerName];
-console.log('clusters', clusters);
+
       p.async(
           provider.api.MAX_CONCURRENT_CALLS,
           g.map(
@@ -46,7 +46,7 @@ console.log('clusters', clusters);
                 cluster =>
                   g.toGenerator(
                     _.map(cluster.machines,
-                          (machine, id) => {console.log(machine, id); return machine; })))
+                          (machine, id) => { return machine; })))
             ),
             machine => new Promise((resolve, reject) => {
               start('Machine', {machine});
@@ -64,7 +64,7 @@ console.log('clusters', clusters);
             })
           ),
           (machine, machinesDestroyedSoFar) => {
-            console.log('destroyed', machine, machinesDestroyedSoFar);
+            log('destroyed', machine, machinesDestroyedSoFar);
           }
         )
         .then(
