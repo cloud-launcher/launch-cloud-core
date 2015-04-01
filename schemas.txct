@@ -33,7 +33,9 @@ cadvisor: {
     80: 'http',
     443: 'https'
   },
-  out: ['influxdb']
+  out: {
+    optional: ['influxdb']
+  }
 }
 
 cadvisor: {
@@ -41,7 +43,5 @@ cadvisor: {
     80: 'http',
     443: 'https'
   },
-  out: {
-    required: ['influxdb']
-  }
+  out: ['influxdb']
 }

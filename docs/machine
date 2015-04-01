@@ -1,0 +1,45 @@
+machine {
+  id,
+  status,
+  location: {
+    provider,
+    region
+  },
+  networks: {
+    v4: [{ipAddress, netmask, gateway, type}],
+    v6: []
+  },
+  role,
+  size: {
+    name,
+    cpus,
+    memory,
+    disk
+  },
+  image,
+  history: {
+    generatedAt,
+    requestedAt,
+    createdAt,
+    destroyedAt?
+  }
+}
+
+status {
+  generated,
+  requested,
+  created,
+  new,
+  active,
+  failed,
+  destroying,
+  destroyed
+}
+
+generated: ['requested', 'destroying']
+requested: ['created', 'failed', 'destroying']
+created: ['new', 'failed', 'destroying']
+new: ['active', 'failed', 'destroying']
+active: ['failed', 'destroying']
+destroying: ['destroyed']
+destroyed: []
