@@ -174,10 +174,9 @@ module.exports = (plan, providers, logFn) => {
         template = isGlobal ? templates.containerService : templates['container@Service'],
         serviceName = containerName + (isGlobal ? '' : '@'),
         container = definition.containers[containerName] || {},
-        options = container.options;
+        options = computeOptions(container);
 
-
-    if (containerName === 'cadvisor') options = '-v /:/rootfs:ro -v /var/run:/var/run:rw -v /sys:/sys:ro -v /var/lib/docker:/var/lib/docker:ro -p 8080:8080';
+    if (containerName === 'cadvisor' && !options) options = '-v /:/rootfs:ro -v /var/run:/var/run:rw -v /sys:/sys:ro -v /var/lib/docker:/var/lib/docker:ro -p 8080:8080';
 
     // fix these names!
     containerName = getQualifiedContainerName(containerName);
@@ -200,6 +199,18 @@ module.exports = (plan, providers, logFn) => {
       permissions: '0600',
       content: indent(service.content, '      ')
     };
+  }
+
+  function computeOptions(container) {
+    if (container.options) return container.options;
+
+    const {environment, ports, volumes} = container;
+
+    return _.compact([
+      _.map(environment,  (value, key) => `-e ${key}="${value}"`).join(' '),
+      _.map(ports,        (from, to) =>   `-p ${to}${from === true ? '' : (':' + from)}`).join(' '),
+      _.map(volumes,      (from, to) =>   `-v ${to}${from === true ? '' : (':' + from)}`).join(' ')
+    ]).join(' ');
   }
 
   function getQualifiedContainerName(containerName) {
