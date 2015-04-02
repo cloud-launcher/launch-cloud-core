@@ -41,7 +41,8 @@ module.exports = (plan, providers, logFn) => {
                   const cloud = {
                     id: cloudID,
                     clusters,
-                    clusterCount: _.keys(clusters).length
+                    clusterCount: _.keys(clusters).length,
+                    definition: definition
                   };
 
                   ok('Plan', {cloud});
@@ -207,7 +208,7 @@ module.exports = (plan, providers, logFn) => {
     const {environment, ports, volumes} = container;
 
     return _.compact([
-      _.map(environment,  (value, key) => `-e ${key}="${value}"`).join(' '),
+      _.map(environment,  (value, key) => `-e ${key}=${value}`).join(' '),
       _.map(ports,        (from, to) =>   `-p ${to}${from === true ? '' : (':' + from)}`).join(' '),
       _.map(volumes,      (from, to) =>   `-v ${to}${from === true ? '' : (':' + from)}`).join(' ')
     ]).join(' ');

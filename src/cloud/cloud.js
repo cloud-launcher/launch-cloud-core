@@ -18,7 +18,6 @@ module.exports = (cloud, providers, log, request, proxies) => {
             .then(cloud => generatePlan(cloud, providers, log, request, proxies.discoveryEtcdApiRoot || discoveryEtcdApiRoot))
             .then(plan => executePlan(plan, providers, log))
             .then(launchedCloud => {
-              launchedCloud.configuration = _.cloneDeep(cloud);
               return launchedCloud;
             });
   }
