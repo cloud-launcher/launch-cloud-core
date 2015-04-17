@@ -165,39 +165,42 @@ module.exports = (plan, providers, logFn) => {
       content: indent(templates.util_sh, '      ')
     };
 
-    return [bootstrap, util].concat(_.map(containerNames, containerName => makeFileRecord(roleName, containerName)));
-  }
+    return [
+      bootstrap,
+      util
+    ].concat(_.map(containerNames, makeFileRecord));
 
-  function makeFileRecord(roleName, containerName) {
-    let isGlobal = _.contains(definition.roles.$all || [], containerName),
-        template = isGlobal ? templates.containerService : templates['container@Service'],
-        serviceName = containerName + (isGlobal ? '' : '@'),
-        container = definition.containers[containerName] || {},
-        options = computeOptions(container);
+    function makeFileRecord(containerName) {
+      let isGlobal = _.contains(definition.roles.$all || [], containerName),
+          template = isGlobal ? templates.containerService : templates['container@Service'],
+          serviceName = containerName + (isGlobal ? '' : '@'),
+          container = definition.containers[containerName] || {},
+          options = computeOptions(container);
 
-    if (containerName === 'cadvisor' && !options) options = '-v /:/rootfs:ro -v /var/run:/var/run:rw -v /sys:/sys:ro -v /var/lib/docker:/var/lib/docker:ro -p 8080:8080';
+      if (containerName === 'cadvisor' && !options) options = '-v /:/rootfs:ro -v /var/run:/var/run:rw -v /sys:/sys:ro -v /var/lib/docker:/var/lib/docker:ro -p 8080:8080';
 
-    // fix these names!
-    containerName = getQualifiedContainerName(containerName);
+      // fix these names!
+      containerName = getQualifiedContainerName(containerName);
 
-    const service = {
-      name: containerName,
-      content: template.render({
-        serviceName,
-        containerName,
-        statsContainerName: containerName.replace('/', '_'),
-        roleName,
-        options,
-        isGlobal
-      })
-    };
+      const service = {
+        name: containerName,
+        content: template.render({
+          serviceName,
+          containerName,
+          statsContainerName: containerName.replace('/', '_'),
+          roleName,
+          options,
+          isGlobal
+        })
+      };
 
-    return {
-      path: '/home/core/' + serviceName + '.service',
-      owner: 'core',
-      permissions: '0600',
-      content: indent(service.content, '      ')
-    };
+      return {
+        path: '/home/core/' + serviceName + '.service',
+        owner: 'core',
+        permissions: '0600',
+        content: indent(service.content, '      ')
+      };
+    }
   }
 
   function computeOptions(container) {
