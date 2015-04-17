@@ -27,27 +27,28 @@ module.exports = (plan, providers, logFn) => {
       const clustersByProvider = _.groupBy(plan.clusters, cluster => { return cluster.providerName; });
 
       const launchPromise =
-        Promise.all(_.map(clustersByProvider, launchProviderClusters))
-                .then(providerClusters => {
-                  const clusters = _.reduce(providerClusters, (result, clusters) => {
-                      _.each(clusters, (cluster, id) => {
-                        result[id] = cluster;
-                        cluster.machineCount = _.keys(cluster.machines).length;
-                      });
+        Promise
+          .all(_.map(clustersByProvider, launchProviderClusters))
+          .then(providerClusters => {
+            const clusters = _.reduce(providerClusters, (result, clusters) => {
+              _.each(clusters, (cluster, id) => {
+                result[id] = cluster;
+                cluster.machineCount = _.keys(cluster.machines).length;
+              });
 
-                      return result;
-                    }, {});
+              return result;
+            }, {});
 
-                  const cloud = {
-                    id: cloudID,
-                    clusters,
-                    clusterCount: _.keys(clusters).length,
-                    definition: definition
-                  };
+            const cloud = {
+              id: cloudID,
+              clusters,
+              clusterCount: _.keys(clusters).length,
+              definition: definition
+            };
 
-                  ok('Plan', {cloud});
-                  resolve(cloud);
-                });
+            ok('Plan', {cloud});
+            resolve(cloud);
+          });
 
       launchPromise.catch(error => {
         reject(bad('Plan', {error}));
@@ -107,9 +108,6 @@ module.exports = (plan, providers, logFn) => {
             };
 
             start('Machine', {machine});
-
-            // ok('Machine', {machine});
-            // resolve(machine);
 
             provider
               .api
