@@ -144,17 +144,8 @@ module.exports = (plan, providers, logFn) => {
       owner: 'core',
       permissions: '0700',
       content: indent(templates.bootstrap.render({
-        services: _.map(containerNames, containerName => {
-            let isGlobal = _.contains(definition.roles.$all || [], containerName);
-
-            containerName = containerName + (isGlobal ? '' : '@');
-
-            return {
-              fileName: `${containerName}.service`,
-              name: `${containerName}${isGlobal ? '' : id}`
-            };
-          })
-        }),
+        services: _.map(containerNames, getServices)
+      }),
       '      ')
     };
 
@@ -169,6 +160,17 @@ module.exports = (plan, providers, logFn) => {
       bootstrap,
       util
     ].concat(_.map(containerNames, makeFileRecord));
+
+    function getServices(containerName) {
+      let isGlobal = _.contains(definition.roles.$all || [], containerName);
+
+      containerName = containerName + (isGlobal ? '' : '@');
+
+      return {
+        fileName: `${containerName}.service`,
+        name: `${containerName}${isGlobal ? '' : id}`
+      };
+    }
 
     function makeFileRecord(containerName) {
       let isGlobal = _.contains(definition.roles.$all || [], containerName),
