@@ -19,6 +19,10 @@ cd /home/core
   fi
 ) &
 
+mkdir -p /dev/shm/secrets
+mkdir -p ~/secrets
+ln -s /dev/shm/secrets/. ~/secrets
+
 source util.sh
 
 setEtcd /machines/$(hostname)/stats/on $(TIME="@$(grep btime /proc/stat | cut -d ' ' -f2)" && date --date=$TIME -Is)
@@ -32,5 +36,8 @@ fleetSubmit {{fileName}}
 {{/services}}
 
 {{#services}}
+{{#secrets}}
+{{{generateSecretCommand}}}
+{{/secrets}}
 fleetStart {{name}}
 {{/services}}

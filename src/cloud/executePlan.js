@@ -162,14 +162,48 @@ module.exports = (plan, providers, logFn) => {
     ].concat(_.map(containerNames, makeFileRecord));
 
     function getServices(containerName) {
+      const secrets = getSecrets(containerName);
+
       let isGlobal = _.contains(definition.roles.$all || [], containerName);
 
       containerName = containerName + (isGlobal ? '' : '@');
 
+      const fileName = `${containerName}.service`,
+            name = `${containerName}${isGlobal ? '' : id}`;
+
+      console.log('secrets', secrets);
       return {
-        fileName: `${containerName}.service`,
-        name: `${containerName}${isGlobal ? '' : id}`
+        name,
+        fileName,
+        secrets
       };
+    }
+
+    function getSecrets(containerName) {
+      const container = definition.containers[containerName],
+            secrets = container.secrets || [];
+
+      console.log(container, secrets);
+
+      return _.map(secrets, (definition, name) => {
+        const {type} = definition;
+
+        if (type === 'x509') return generate509CertificateCommand(name, definition);
+        throw new Error(`Unknown secret type: ${type}`);
+      });
+
+      function generate509CertificateCommand(name, definition) {
+        const subject = `/CN=${id}`,
+              keyName = `${name}/key`,
+              certificateName = `${name}/crt`,
+              days = 365,
+              algorithm = 'rsa',
+              bits = 2048;
+
+        return {
+          generateSecretCommand: `mkdir -p ~/secrets/${name} && openssl req -x509 -nodes -days ${days} -newkey ${algorithm}:${bits} -keyout ${keyLocation} -out ${certificateLocation} -subj \"${subject}\"`
+        };
+      }
     }
 
     function makeFileRecord(containerName) {
