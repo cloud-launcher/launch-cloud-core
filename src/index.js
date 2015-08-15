@@ -2,14 +2,6 @@ import api from './api';
 
 import traceurRuntime from './traceur-runtime';
 
-module.exports = config => {
-  const {
-    providers,
-    providerConfigs,
-    log,
-    request,
-    proxies
-  } = config;
-
-  return api(providers, providerConfigs, log, request, proxies);
-};
+export default
+  ({providers, providerConfigs, log, request, proxies}) =>
+  api(provider, providerConfigs, log, request, proxies);
