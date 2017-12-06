@@ -1,0 +1,1 @@
+{"version":3,"names":[],"mappings":"","sources":["api/launch.js"],"sourcesContent":["import cloud from '../cloud/cloud';\n\nmodule.exports =\n  (cloudDescription, providers, log, request, dockerHubApiRoot) =>\n  cloud(cloudDescription, providers, log, request, dockerHubApiRoot).launch();"],"file":"api/launch.js","sourceRoot":"/source/"}

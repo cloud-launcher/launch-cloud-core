@@ -1,0 +1,1 @@
+{"version":3,"names":[],"mappings":"","sources":["api/destroy.js"],"sourcesContent":["import cloud from '../cloud/cloud';\n\nmodule.exports =\n  (cloudDescription, providers, log) =>\n  cloud(cloudDescription, providers, log).destroy();"],"file":"api/destroy.js","sourceRoot":"/source/"}

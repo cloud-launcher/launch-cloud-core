@@ -1,0 +1,1 @@
+{"version":3,"names":[],"mappings":"","sources":["index.js"],"sourcesContent":["import api from './api';\n\nimport traceurRuntime from './traceur-runtime';\n\nexport default\n  ({providers, providerConfigs, log, request, proxies}) =>\n  api(providers, providerConfigs, log, request, proxies);"],"file":"index.js","sourceRoot":"/source/"}
