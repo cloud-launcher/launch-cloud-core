@@ -1,6 +1,6 @@
 {
   "name": "launch-cloud-core",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "launches clouds",
   "repository": "https://github.com/cloud-launcher/lauch-cloud-core",
   "main": ".dist/index.js",
