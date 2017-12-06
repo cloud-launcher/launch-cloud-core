@@ -11,10 +11,11 @@
     "do-wrapper": "^0.2.3",
     "generator-trees": "^0.1.1",
     "hogan.js": "^3.0.2",
-    "launch-cloud-providers": "^0.0.5",
+    "launch-cloud-providers": "^0.0.6",
     "promise-callback": "^3.0.0"
   },
   "devDependencies": {
+    "babelify": "^7.1.0",
     "glob": "^5.0.3",
     "gulp": "^3.8.11",
     "gulp-brfs": "^0.1.0",
